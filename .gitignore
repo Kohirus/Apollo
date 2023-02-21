@@ -1,4 +1,4 @@
-.cache/
 bin/
 build/
 lib/
+.vscode/

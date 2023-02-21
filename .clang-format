@@ -1,0 +1,44 @@
+BasedOnStyle: WebKit
+
+# 关闭包含头文件的排序
+SortIncludes: false
+# 宏对齐
+AlignConsecutiveMacros: true
+# 连续赋值对齐
+AlignConsecutiveAssignments: true
+# 连续声明对齐
+AlignConsecutiveDeclarations: true
+# 尾随注释对齐
+AlignTrailingComments: true
+# 简单的 if 语句是否换行: Never，Always
+AllowShortIfStatementsOnASingleLine: Always
+# 简单的循环语句是否显示在同一行: Bool
+AllowShortLoopsOnASingleLine: true
+# 允许简单的 case语句显示在同一行: Bool
+AllowShortCaseLabelsOnASingleLine: false
+# 只有定义成Custom，下面的大括号才会生效
+BreakBeforeBraces: Custom
+# 大括号后的分行
+BraceWrapping : 
+  # class定义后面
+  AfterClass: false
+  # 控制语句后面
+  AfterControlStatement: false
+  # enum定义后面
+  AfterEnum: false
+  # 函数定义后面
+  AfterFunction: false
+  # 命名空间定义后面
+  AfterNamespace: false
+  # ObjC定义后面
+  AfterObjCDeclaration: false
+  # struct定义后面
+  AfterStruct: false
+  # union定义后面
+  AfterUnion: false
+  # catch之前
+  BeforeCatch: false
+  # else之前
+  BeforeElse: false
+  # 缩进大括号
+  IndentBraces: false
