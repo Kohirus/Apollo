@@ -13,7 +13,6 @@ void operator delete[](void* ptr);
 namespace apollo {
 
 static void* concurrentAlloc(size_t size) {
-    printf("custom alloc\n");
     if (size > kMaxBytes) // 大于256KB的内存申请
     {
         // 计算出对齐后需要申请的页数
@@ -49,7 +48,6 @@ static void* concurrentAlloc(size_t size) {
 }
 
 static void concurrentFree(void* ptr) {
-    printf("custom free\n");
     if (ptr != nullptr) {
         Span*  span = PageCache::getInstance()->mapToSpan(ptr);
         size_t size = span->blockSize_;

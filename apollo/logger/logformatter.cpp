@@ -171,7 +171,7 @@ void LogFormatter::init() {
 
         std::string str, fmt;
         while (n < pattern_.size()) {
-            if (!fmt_status && (!isalpha(pattern_[n] && pattern_[n] != '{' && pattern_[n] != '}'))) {
+            if (!fmt_status && (!isalpha(pattern_[n]) && pattern_[n] != '{' && pattern_[n] != '}')) {
                 str = pattern_.substr(i + 1, n - i - 1);
                 break;
             }

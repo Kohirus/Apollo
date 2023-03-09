@@ -1,6 +1,5 @@
 #include "logger.hpp"
 #include <iostream>
-#include "common.hpp"
 #include "logformatter.hpp"
 #include "logevent.hpp"
 #include "logappender.hpp"
@@ -100,36 +99,23 @@ std::shared_ptr<LogFormatter> Logger::getFormatter() {
     return formatter_;
 }
 
-void StdoutLogAppender::log(std::shared_ptr<Logger> logger, LogLevel::Level level, std::shared_ptr<LogEvent> ev) {
-    if (level >= level_) {
-        std::lock_guard<std::mutex> lock(mtx_);
-        formatter_->format(std::cout, logger, level, ev);
-    }
+LoggerManager::LoggerManager() {
+    root_.reset(new Logger);
+    root_->addAppender(std::shared_ptr<LogAppender>(new StdoutLogAppender));
+
+    loggers_[root_->name_] = root_;
 }
 
-FileLogAppender::FileLogAppender(const std::string& filename)
-    : filename_(filename) {
-    reopen();
-}
-
-void FileLogAppender::log(std::shared_ptr<Logger> logger, LogLevel::Level level, std::shared_ptr<LogEvent> ev) {
-    if (level >= level_) {
-        uint64_t now = ev->getTime();
-        if (now >= (lastTime_ + 3)) {
-            reopen();
-            lastTime_ = now;
-        }
-        std::lock_guard<std::mutex> lock(mtx_);
-        if (!formatter_->format(filestream_, logger, level, ev)) {
-            std::cout << "error" << std::endl;
-        }
-    }
-}
-
-bool FileLogAppender::reopen() {
+std::shared_ptr<Logger> LoggerManager::logger(const std::string& name) {
     std::lock_guard<std::mutex> lock(mtx_);
-    if (filestream_) {
-        filestream_.close();
+
+    auto iter = loggers_.find(name);
+    if (iter != loggers_.end()) {
+        return iter->second;
     }
-    return FileHelper::OpenForWrite(filestream_, filename_, std::ios::app);
+
+    std::shared_ptr<Logger> log(new Logger(name));
+    log->root_     = root_;
+    loggers_[name] = log;
+    return log;
 }

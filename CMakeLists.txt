@@ -20,9 +20,10 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 # 设置头文件的搜索路径
 include_directories(${PROJECT_SOURCE_DIR}/memorypool/include)
 include_directories(${PROJECT_SOURCE_DIR}/apollo/include)
+include_directories(${PROJECT_SOURCE_DIR}/apollo/include/logger)
 # 设置库文件的搜索路径
 link_directories(${PROJECT_SOURCE_DIR}/lib)
 
 add_subdirectory(memorypool)
-add_subdirectory(example)
 add_subdirectory(apollo)
+add_subdirectory(example)

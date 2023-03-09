@@ -81,19 +81,28 @@ private:
     LogLevel::Level level_;
 };
 
-// class LogEventGuard {
-// public:
-//     LogEventGuard(std::shared_ptr<LogEvent> ev);
-//     ~LogEventGuard();
-//
-//     /// 获取日志事件
-//     std::shared_ptr<LogEvent> getEvent() const { return event_; }
-//     /// 获取日志内容流
-//     std::stringstream getStream();
-//
-// private:
-//     std::shared_ptr<LogEvent> event_;
-// };
+/**
+ * @brief 日志事件包装器
+ */
+class LogEventGuard {
+public:
+    /**
+     * @brief 构造函数
+     * 
+     * @param ev 日志事件 
+     */
+    LogEventGuard(std::shared_ptr<LogEvent> ev);
+    ~LogEventGuard();
+
+    /// 获取日志事件
+    std::shared_ptr<LogEvent> getEvent() const { return event_; }
+    /// 获取日志内容流
+    std::stringstream& getStream() const;
+
+private:
+    /// 日志事件
+    std::shared_ptr<LogEvent> event_;
+};
 
 }
 

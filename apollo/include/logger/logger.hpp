@@ -5,6 +5,7 @@
 #include <string>
 #include <list>
 #include <mutex>
+#include <map>
 #include "loglevel.hpp"
 
 namespace apollo {
@@ -136,6 +137,44 @@ private:
     std::shared_ptr<Logger> root_;
     /// 互斥锁
     std::mutex mtx_;
+    friend class LoggerManager;
+};
+
+/**
+ * @brief 日志管理器类
+ */
+class LoggerManager {
+public:
+    static LoggerManager* getInstance() {
+        static LoggerManager mgr;
+        return &mgr;
+    }
+
+    /**
+     * @brief 获取日志器
+     * 
+     * @param name 日志器名称 
+     * @return std::shared_ptr<Logger> 
+     */
+    std::shared_ptr<Logger> logger(const std::string& name);
+
+    /**
+     * @brief 获取主日志器
+     * 
+     * @return std::shared_ptr<Logger> 
+     */
+    std::shared_ptr<Logger> root() const { return root_; }
+
+private:
+    LoggerManager();
+
+private:
+    /// 互斥锁
+    std::mutex mtx_;
+    /// 日志管理器容器
+    std::map<std::string, std::shared_ptr<Logger>> loggers_;
+    /// 主日志器
+    std::shared_ptr<Logger> root_;
 };
 
 }

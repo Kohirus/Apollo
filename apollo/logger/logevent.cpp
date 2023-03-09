@@ -1,4 +1,5 @@
 #include "logevent.hpp"
+#include "logger.hpp"
 #include <cstdarg>
 using namespace apollo;
 
@@ -30,4 +31,16 @@ void LogEvent::format(const char* fmt, va_list al) {
         ss_ << std::string(buf, len);
         free(buf);
     }
+}
+
+LogEventGuard::LogEventGuard(std::shared_ptr<LogEvent> ev)
+    : event_(ev) {
+}
+
+LogEventGuard::~LogEventGuard() {
+    event_->getLogger()->log(event_->getLevel(), event_);
+}
+
+std::stringstream& LogEventGuard::getStream() const {
+    return event_->getStream();
 }

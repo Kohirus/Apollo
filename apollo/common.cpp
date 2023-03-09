@@ -1,8 +1,68 @@
 #include "common.hpp"
+#include <sys/stat.h>
+#include <unistd.h>
+#include <cstring>
+#include <sys/syscall.h>
 using namespace apollo;
 
+__thread pid_t t_tid = 0;
+
+pid_t gettid() {
+    return static_cast<pid_t>(::syscall(SYS_gettid));
+}
+
+void cacheTid() {
+    if (t_tid == 0) {
+        t_tid = gettid();
+    }
+}
+
+pid_t ThreadHelper::ThreadId() {
+    if (t_tid == 0) {
+        cacheTid();
+    }
+    return t_tid;
+}
+
+static int __lstat(const char* file, struct stat* st = nullptr) {
+    struct stat lst;
+    int         ret = lstat(file, &lst);
+    if (st) {
+        *st = lst;
+    }
+    return ret;
+}
+
+static int __mkdir(const char* dirname) {
+    if (access(dirname, F_OK) == 0) {
+        return 0;
+    }
+    return mkdir(dirname, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+}
+
 bool FileHelper::Mkdir(const std::string& dirname) {
-    return true;
+    if (__lstat(dirname.c_str()) == 0) {
+        return true;
+    }
+    char* path = strdup(dirname.c_str());
+    char* ptr  = strchr(path + 1, '/');
+    do {
+        for (; ptr; *ptr = '/', ptr = strchr(ptr + 1, '/')) {
+            *ptr = '\0';
+            if (__mkdir(path) != 0) {
+                break;
+            }
+        }
+        if (ptr != nullptr) {
+            break;
+        } else if (__mkdir(path) != 0) {
+            break;
+        }
+        free(path);
+        return true;
+    } while (0);
+    free(path);
+    return false;
 }
 
 std::string FileHelper::Dirname(const std::string& filename) {
