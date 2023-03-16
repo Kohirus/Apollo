@@ -130,7 +130,8 @@ public:
 };
 
 LogFormatter::LogFormatter(const std::string& pattern)
-    : pattern_(pattern) {
+    : pattern_(pattern)
+    , error_(false) {
     init();
 }
 

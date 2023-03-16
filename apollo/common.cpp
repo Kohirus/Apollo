@@ -3,9 +3,11 @@
 #include <unistd.h>
 #include <cstring>
 #include <sys/syscall.h>
+#include <pthread.h>
 using namespace apollo;
 
-__thread pid_t t_tid = 0;
+thread_local pid_t       t_tid        = 0;
+thread_local std::string t_threadName = "mainThread";
 
 pid_t gettid() {
     return static_cast<pid_t>(::syscall(SYS_gettid));
@@ -17,11 +19,24 @@ void cacheTid() {
     }
 }
 
+void setThreadName(std::thread* th, const std::string& name) {
+    auto handle = th->native_handle();
+    pthread_setname_np(handle, name.c_str());
+}
+
 pid_t ThreadHelper::ThreadId() {
     if (t_tid == 0) {
         cacheTid();
     }
     return t_tid;
+}
+
+const std::string& ThreadHelper::ThreadName() {
+    return t_threadName;
+}
+
+void ThreadHelper::SetThreadName(std::thread* th, const std::string& name) {
+    setThreadName(th, name);
 }
 
 static int __lstat(const char* file, struct stat* st = nullptr) {

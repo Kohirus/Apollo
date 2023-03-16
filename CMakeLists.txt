@@ -18,6 +18,7 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 # 设置头文件的搜索路径
+include_directories(${PROJECT_SOURCE_DIR}/3rdparty)
 include_directories(${PROJECT_SOURCE_DIR}/memorypool/include)
 include_directories(${PROJECT_SOURCE_DIR}/apollo/include)
 include_directories(${PROJECT_SOURCE_DIR}/apollo/include/logger)

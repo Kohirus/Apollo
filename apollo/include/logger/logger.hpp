@@ -168,6 +168,11 @@ public:
 private:
     LoggerManager();
 
+    /**
+     * @brief 加载配置文件
+     */
+    void loadConfig();
+
 private:
     /// 互斥锁
     std::mutex mtx_;

@@ -28,7 +28,7 @@
     if (logger->getLevel() <= level)                                                            \
     apollo::LogEventGuard(std::shared_ptr<apollo::LogEvent>(new apollo::LogEvent(logger, level, \
                               __FILE__, __LINE__, 0, apollo::ThreadHelper::ThreadId(),          \
-                              0, time(0), "")))                                                 \
+                              0, time(0), apollo::ThreadHelper::ThreadName())))                 \
         .getStream()
 
 /// 使用流式方式将DEBUG级别的日志写入
@@ -57,7 +57,7 @@
     if (logger->getLevel() <= level)                                                                  \
     apollo::LogEventGuard(shared_ptr<apollo::LogEvent>(new apollo::LogEvent(                          \
                               logger, level, __FILE__, __LINE__, 0, apollo::ThreadHelper::ThreadId(), \
-                              0, time(0), "")))                                                       \
+                              0, time(0), apollo::ThreadHelper::ThreadName())))                                                       \
         .getEvent()                                                                                   \
         ->format(fmt, __VA_ARGS__)
 
