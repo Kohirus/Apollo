@@ -22,6 +22,7 @@ include_directories(${PROJECT_SOURCE_DIR}/3rdparty)
 include_directories(${PROJECT_SOURCE_DIR}/memorypool/include)
 include_directories(${PROJECT_SOURCE_DIR}/apollo/include)
 include_directories(${PROJECT_SOURCE_DIR}/apollo/include/logger)
+include_directories(${PROJECT_SOURCE_DIR}/apollo/include/net)
 # 设置库文件的搜索路径
 link_directories(${PROJECT_SOURCE_DIR}/lib)
 

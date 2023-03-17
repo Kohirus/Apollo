@@ -18,6 +18,8 @@
  */
 #define LOG_NAME(name) apollo::LoggerManager::getInstance()->logger(name)
 
+static std::shared_ptr<apollo::Logger> g_logger = LOG_ROOT();
+
 /**
  * @brief 使用流式方式将日志级别level的日志写入到logger
  *

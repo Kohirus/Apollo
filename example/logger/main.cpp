@@ -13,8 +13,6 @@
 #include <iostream>
 using namespace std;
 
-static std::shared_ptr<apollo::Logger> g_logger = LOG_ROOT();
-
 int main() {
     LOG_DEBUG(g_logger) << "debug log";
     LOG_INFO(g_logger) << "info log";
