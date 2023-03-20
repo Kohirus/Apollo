@@ -4,12 +4,16 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <sys/epoll.h>
 #include "bytebuffer.hpp"
 #include "log.hpp"
 using namespace apollo;
 
-TcpServer::TcpServer(const std::string& ip, uint16_t port)
-    : addrLen_(sizeof(connAddr_)) {
+std::string message = "";
+
+TcpServer::TcpServer(std::shared_ptr<EventLoop> loop, const std::string& ip, uint16_t port)
+    : addrLen_(sizeof(connAddr_))
+    , loop_(loop) {
     bzero(&connAddr_, addrLen_);
 
     // 忽略如下信号:
@@ -55,6 +59,15 @@ TcpServer::TcpServer(const std::string& ip, uint16_t port)
         LOG_FATAL(g_logger) << "Failed to listen";
         exit(1);
     }
+
+    // 注册套接字读事件的回调函数
+    LOG_DEBUG(g_logger) << "try to add connection event";
+    loop_->addEvent(sockfd_,
+        std::bind(&TcpServer::acceptConnection,
+            this,
+            std::placeholders::_1,
+            std::placeholders::_2),
+        EPOLLIN);
 }
 
 TcpServer::~TcpServer() {
@@ -85,43 +98,81 @@ void TcpServer::doAccept() {
         } else {
             LOG_DEBUG(g_logger) << "Accept successfully";
 
-            int        ret = 0;
-            ByteBuffer ibuf, obuf;
-            char*      msg     = nullptr;
-            int        msg_len = 0;
-            do {
-                ret = ibuf.readFd(connfd);
-                if (ret == -1) {
-                    LOG_DEBUG(g_logger) << "failed to read connfd";
-                    break;
-                }
-                LOG_DEBUG(g_logger) << "data length: " << ibuf.length();
-
-                msg_len = ibuf.length();
-                msg     = new char[msg_len];
-                bzero(msg, msg_len);
-                memcpy(msg, ibuf.begin(), msg_len);
-                ibuf.pop(msg_len);
-                ibuf.compact();
-
-                LOG_DEBUG(g_logger) << "recv data = " << msg;
-
-                // 回显数据
-                obuf.append(msg, msg_len);
-                while (obuf.length()) {
-                    int write_ret = obuf.writeFd(connfd);
-                    if (write_ret == -1) {
-                        LOG_DEBUG(g_logger) << "failed to write connfd";
-                        return;
-                    } else if (write_ret == 0) {
-                        break;
-                    }
-                }
-
-                delete[] msg;
-            } while (ret != 0);
-
-            close(connfd);
+            loop_->addEvent(connfd,
+                std::bind(&TcpServer::readCallback,
+                    this,
+                    std::placeholders::_1,
+                    std::placeholders::_2),
+                EPOLLIN);
+            break;
         }
     }
+}
+
+void TcpServer::acceptConnection(std::shared_ptr<EventLoop> loop, int fd) {
+    LOG_DEBUG(g_logger) << "accept connection callback";
+    this->doAccept();
+}
+
+void TcpServer::readCallback(std::shared_ptr<EventLoop> loop, int fd) {
+    int ret = 0;
+
+    ByteBuffer ibuf;
+    ret = ibuf.readFd(fd);
+    if (ret == -1) {
+        LOG_ERROR(g_logger) << "ByteBuffer read fd error";
+        // 删除事件
+        loop->removeEvent(fd);
+
+        close(fd);
+        return;
+    } else if (ret == 0) {
+        loop->removeEvent(fd);
+        close(fd);
+        return;
+    }
+
+    LOG_DEBUG(g_logger) << "ByteBuffer length: " << ibuf.length();
+
+    // 将读到的数据存入message
+    message = std::string(ibuf.data());
+
+    ibuf.pop(message.size());
+    ibuf.compact();
+
+    LOG_DEBUG(g_logger) << "recv data: " << message;
+
+    // 删除读事件 添加写事件
+    loop->removeEvent(fd, EPOLLIN);
+    loop->addEvent(fd,
+        std::bind(&TcpServer::writeCallback,
+            this,
+            std::placeholders::_1,
+            std::placeholders::_2),
+        EPOLLOUT);
+}
+
+void TcpServer::writeCallback(std::shared_ptr<EventLoop> loop, int fd) {
+    ByteBuffer obuf;
+
+    // 回显数据
+    obuf.append(message);
+    while (obuf.length()) {
+        int ret = obuf.writeFd(fd);
+        if (ret == -1) {
+            LOG_ERROR(g_logger) << "Failed to write fd";
+            return;
+        } else if (ret == 0) {
+            break;
+        }
+    }
+
+    // 删除写事件 添加读事件
+    loop->removeEvent(fd, EPOLLOUT);
+    loop->addEvent(fd,
+        std::bind(&TcpServer::readCallback,
+            this,
+            std::placeholders::_1,
+            std::placeholders::_2),
+        EPOLLIN);
 }
