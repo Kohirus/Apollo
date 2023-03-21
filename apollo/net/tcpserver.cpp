@@ -7,6 +7,7 @@
 #include <sys/epoll.h>
 #include "bytebuffer.hpp"
 #include "log.hpp"
+#include "tcpconnection.hpp"
 using namespace apollo;
 
 std::string message = "";
@@ -98,12 +99,12 @@ void TcpServer::doAccept() {
         } else {
             LOG_DEBUG(g_logger) << "Accept successfully";
 
-            loop_->addEvent(connfd,
-                std::bind(&TcpServer::readCallback,
-                    this,
-                    std::placeholders::_1,
-                    std::placeholders::_2),
-                EPOLLIN);
+            std::shared_ptr<TcpConnection> conn(new TcpConnection(connfd, loop_));
+            if (conn == nullptr) {
+                LOG_FATAL(g_logger) << "failed to create new connection";
+                exit(1);
+            }
+            LOG_DEBUG(g_logger) << "get new connection";
             break;
         }
     }
