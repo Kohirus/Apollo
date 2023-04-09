@@ -2,6 +2,7 @@
 #include "json.hpp"
 #include <fstream>
 #include <iostream>
+using namespace apollo;
 
 using json = nlohmann::json;
 

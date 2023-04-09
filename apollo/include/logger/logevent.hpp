@@ -1,10 +1,10 @@
-#ifndef __LOG_EVENT_HPP__
-#define __LOG_EVENT_HPP__
+#ifndef __APOLLO_LOG_EVENT_HPP__
+#define __APOLLO_LOG_EVENT_HPP__
 
+#include "loglevel.hpp"
 #include <memory>
 #include <sstream>
 #include <string>
-#include "loglevel.hpp"
 
 namespace apollo {
 
@@ -104,6 +104,6 @@ private:
     std::shared_ptr<LogEvent> event_;
 };
 
-}
+} // namespace apollo
 
-#endif // !__LOG_EVENT_HPP__
+#endif // !__APOLLO_LOG_EVENT_HPP__

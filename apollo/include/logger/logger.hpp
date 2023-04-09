@@ -1,12 +1,12 @@
-#ifndef __LOGGER_HPP__
-#define __LOGGER_HPP__
+#ifndef __APOLLO_LOGGER_HPP__
+#define __APOLLO_LOGGER_HPP__
 
-#include <memory>
-#include <string>
-#include <list>
-#include <mutex>
-#include <map>
 #include "loglevel.hpp"
+#include <list>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <string>
 
 namespace apollo {
 
@@ -182,6 +182,6 @@ private:
     std::shared_ptr<Logger> root_;
 };
 
-}
+} // namespace apollo
 
-#endif // !__LOGGER_HPP__
+#endif // !__APOLLO_LOGGER_HPP__

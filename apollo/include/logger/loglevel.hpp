@@ -1,5 +1,5 @@
-#ifndef __LOG_LEVEL_HPP__
-#define __LOG_LEVEL_HPP__
+#ifndef __APOLLO_LOG_LEVEL_HPP__
+#define __APOLLO_LOG_LEVEL_HPP__
 
 #include <string>
 
@@ -36,6 +36,6 @@ public:
     static LogLevel::Level FromString(const std::string& str);
 };
 
-}
+} // namespace apollo
 
-#endif // !__LOG_LEVEL_HPP__
+#endif // !__APOLLO_LOG_LEVEL_HPP__

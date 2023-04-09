@@ -1,5 +1,5 @@
-#ifndef __CONCURRENT_ALLOC_HPP__
-#define __CONCURRENT_ALLOC_HPP__
+#ifndef __APOLLO_CONCURRENT_ALLOC_HPP__
+#define __APOLLO_CONCURRENT_ALLOC_HPP__
 
 #include "threadcache.hpp"
 #include "pagecache.hpp"
@@ -65,6 +65,6 @@ static void concurrentFree(void* ptr) {
         }
     }
 }
-}
+} // namespace apollo
 
-#endif // !__CONCURRENT_ALLOC_HPP__
+#endif // !__APOLLO_CONCURRENT_ALLOC_HPP__

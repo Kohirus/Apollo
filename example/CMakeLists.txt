@@ -6,6 +6,6 @@ aux_source_directory(./logger LOG_LIST)
 add_executable(log_test ${LOG_LIST})
 target_link_libraries(log_test mempool apollo)
 
-aux_source_directory(./net NET_LIST)
-add_executable(server ${NET_LIST})
+aux_source_directory(./server SVR_LIST)
+add_executable(server ${SVR_LIST})
 target_link_libraries(server mempool apollo)

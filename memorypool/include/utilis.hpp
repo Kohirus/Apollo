@@ -1,9 +1,9 @@
-#ifndef __UTILTS_HPP__
-#define __UTILTS_HPP__
+#ifndef __APOLLO_UTILTS_HPP__
+#define __APOLLO_UTILTS_HPP__
 
-#include <new>
 #include <cassert>
 #include <mutex>
+#include <new>
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -413,6 +413,6 @@ public:
     std::mutex mtx_;
 };
 
-}
+} // namespace apollo
 
-#endif // !__UTILTS_HPP__
+#endif // !__APOLLO_UTILTS_HPP__

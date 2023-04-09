@@ -1,9 +1,9 @@
 #include "logger.hpp"
-#include <iostream>
-#include "logformatter.hpp"
-#include "logevent.hpp"
-#include "logappender.hpp"
 #include "configparser.hpp"
+#include "logappender.hpp"
+#include "logevent.hpp"
+#include "logformatter.hpp"
+#include <iostream>
 using namespace apollo;
 
 Logger::Logger(const std::string& name)
@@ -123,7 +123,7 @@ void LoggerManager::loadConfig() {
             root_.reset(new Logger);
             root_->setLevel(LogLevel::FromString(iter->second.level));
             root_->setFormatter(iter->second.formatter);
-            for (int i = 0; i < iter->second.apds.size(); i++) {
+            for (size_t i = 0; i < iter->second.apds.size(); i++) {
                 auto apdConf = iter->second.apds[i];
                 if (apdConf.type == "file") {
                     root_->addAppender(std::shared_ptr<LogAppender>(new FileLogAppender(apdConf.file)));
@@ -136,7 +136,7 @@ void LoggerManager::loadConfig() {
             std::shared_ptr<Logger> log(new Logger(iter->first));
             log->setLevel(LogLevel::FromString(iter->second.level));
             log->setFormatter(iter->second.formatter);
-            for (int i = 0; i < iter->second.apds.size(); i++) {
+            for (size_t i = 0; i < iter->second.apds.size(); i++) {
                 auto apdConf = iter->second.apds[i];
                 if (apdConf.type == "file") {
                     log->addAppender(std::shared_ptr<LogAppender>(new FileLogAppender(apdConf.file)));

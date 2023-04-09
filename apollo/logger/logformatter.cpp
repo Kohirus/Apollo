@@ -1,10 +1,10 @@
 #include "logformatter.hpp"
-#include <sstream>
-#include <iostream>
-#include <map>
-#include <functional>
 #include "logevent.hpp"
 #include "logger.hpp"
+#include <functional>
+#include <iostream>
+#include <map>
+#include <sstream>
 using namespace apollo;
 
 class MessageFormatItem : public LogFormatter::FormatItem {

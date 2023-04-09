@@ -1,5 +1,5 @@
-#ifndef __THREAD_CACHE_HPP__
-#define __THREAD_CACHE_HPP__
+#ifndef __APOLLO_THREAD_CACHE_HPP__
+#define __APOLLO_THREAD_CACHE_HPP__
 
 #include "utilis.hpp"
 
@@ -49,6 +49,6 @@ private:
 };
 
 static TLS ThreadCache* s_tlsthreadcache = nullptr;
-}
+} // namespace apollo
 
-#endif // !__THREAD_CACHE_HPP__
+#endif // !__APOLLO_THREAD_CACHE_HPP__

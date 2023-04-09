@@ -1,10 +1,10 @@
-#ifndef __LOG_FORMATTER_HPP__
-#define __LOG_FORMATTER_HPP__
+#ifndef __APOLLO_LOG_FORMATTER_HPP__
+#define __APOLLO_LOG_FORMATTER_HPP__
 
-#include <string>
-#include <memory>
-#include <vector>
 #include "loglevel.hpp"
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace apollo {
 
@@ -87,6 +87,6 @@ private:
     std::vector<std::shared_ptr<FormatItem>> items_;
 };
 
-}
+} // namespace apollo
 
-#endif // !__LOG_FORMATTER_HPP__
+#endif // !__APOLLO_LOG_FORMATTER_HPP__

@@ -1,9 +1,11 @@
-#ifndef __CONFIG_PARSER_HPP__
-#define __CONFIG_PARSER_HPP__
+#ifndef __APOLLO_CONFIG_PARSER_HPP__
+#define __APOLLO_CONFIG_PARSER_HPP__
 
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
+
+namespace apollo {
 
 /**
  * @brief 配置文件解析
@@ -74,5 +76,6 @@ private:
 
     std::map<std::string, LogConfig> logConfig_; // 日志配置信息
 };
+} // namespace apollo
 
-#endif // !__CONFIG_PARSER_HPP__
+#endif // !__APOLLO_CONFIG_PARSER_HPP__

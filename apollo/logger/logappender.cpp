@@ -1,7 +1,7 @@
 #include "logappender.hpp"
+#include "common.hpp"
 #include "logevent.hpp"
 #include "logformatter.hpp"
-#include "common.hpp"
 #include <iostream>
 using namespace apollo;
 

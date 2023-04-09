@@ -1,5 +1,5 @@
-#ifndef __CENTRAL_CACHE_HPP__
-#define __CENTRAL_CACHE_HPP__
+#ifndef __APOLLO_CENTRAL_CACHE_HPP__
+#define __APOLLO_CENTRAL_CACHE_HPP__
 
 #include "utilis.hpp"
 
@@ -53,6 +53,6 @@ private:
 private:
     SpanList spanlists_[kBucketSize];
 };
-}
+} // namespace apollo
 
-#endif // !__CENTRAL_CACHE_HPP__
+#endif // !__APOLLO_CENTRAL_CACHE_HPP__

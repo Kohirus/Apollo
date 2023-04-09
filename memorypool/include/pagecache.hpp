@@ -1,5 +1,5 @@
-#ifndef __PAGE_CACHE_HPP__
-#define __PAGE_CACHE_HPP__
+#ifndef __APOLLO_PAGE_CACHE_HPP__
+#define __APOLLO_PAGE_CACHE_HPP__
 
 #include "utilis.hpp"
 #include "radixtree.hpp"
@@ -47,6 +47,6 @@ private:
     PageMap          hash_;
     ObjectPool<Span> span_pool_;
 };
-}
+} // namespace apollo
 
-#endif // !__PAGE_CACHE_HPP__
+#endif // !__APOLLO_PAGE_CACHE_HPP__

@@ -1,5 +1,5 @@
-#ifndef __RADIX_TREE_HPP__
-#define __RADIX_TREE_HPP__
+#ifndef __APOLLO_RADIX_TREE_HPP__
+#define __APOLLO_RADIX_TREE_HPP__
 
 #include "utilis.hpp"
 #include <cassert>
@@ -105,6 +105,6 @@ using PageMap = RadixTree<32 - kPageShift>;
 using PageMap = RadixTree<64 - kPageShift>;
 #endif
 
-}
+} // namespace apollo
 
-#endif // !__RADIX_TREE_HPP__
+#endif // !__APOLLO_RADIX_TREE_HPP__

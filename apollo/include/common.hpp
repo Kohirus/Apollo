@@ -1,9 +1,9 @@
-#ifndef __COMMON_HPP__
-#define __COMMON_HPP__
+#ifndef __APOLLO_COMMON_HPP__
+#define __APOLLO_COMMON_HPP__
 
 #include <fstream>
-#include <string>
 #include <ios>
+#include <string>
 #include <thread>
 
 namespace apollo {
@@ -63,6 +63,6 @@ public:
      */
     static bool OpenForWrite(std::ofstream& os, const std::string& filename, std::ios_base::openmode mode);
 };
-}
+} // namespace apollo
 
-#endif // !__COMMON_HPP__
+#endif // !__APOLLO_COMMON_HPP__

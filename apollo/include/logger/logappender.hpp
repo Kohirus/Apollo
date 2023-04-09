@@ -1,11 +1,11 @@
-#ifndef __LOG_APPENDER_HPP__
-#define __LOG_APPENDER_HPP__
+#ifndef __APOLLO_LOG_APPENDER_HPP__
+#define __APOLLO_LOG_APPENDER_HPP__
 
+#include "loglevel.hpp"
+#include <fstream>
 #include <memory>
 #include <mutex>
 #include <string>
-#include <fstream>
-#include "loglevel.hpp"
 
 namespace apollo {
 
@@ -79,6 +79,6 @@ private:
     uint64_t lastTime_;
 };
 
-}
+} // namespace apollo
 
-#endif // !__LOG_APPENDER_HPP__
+#endif // !__APOLLO_LOG_APPENDER_HPP__

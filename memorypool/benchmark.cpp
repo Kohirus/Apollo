@@ -1,10 +1,10 @@
 #include "benchmark.hpp"
-#include <vector>
+#include "concurrentalloc.hpp"
+#include "utilis.hpp"
+#include <atomic>
 #include <iostream>
 #include <thread>
-#include <atomic>
-#include "utilis.hpp"
-#include "concurrentalloc.hpp"
+#include <vector>
 using namespace std;
 using namespace apollo;
 

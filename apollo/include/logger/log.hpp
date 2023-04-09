@@ -1,12 +1,12 @@
-#ifndef __LOG_HPP_
-#define __LOG_HPP_
+#ifndef __APOLLO_LOG_HPP_
+#define __APOLLO_LOG_HPP_
 
+#include "logevent.hpp"
+#include "common.hpp"
+#include "logger.hpp"
+#include "loglevel.hpp"
 #include <memory>
 #include <stdio.h>
-#include "logevent.hpp"
-#include "logger.hpp"
-#include "common.hpp"
-#include "loglevel.hpp"
 
 /**
  * @brief 获取主日志器
@@ -57,7 +57,7 @@ static std::shared_ptr<apollo::Logger> g_logger = LOG_ROOT();
  */
 #define LOG_FMT_LEVEL(logger, level, fmt, ...)                                                        \
     if (logger->getLevel() <= level)                                                                  \
-    apollo::LogEventGuard(shared_ptr<apollo::LogEvent>(new apollo::LogEvent(                          \
+    apollo::LogEventGuard(std::shared_ptr<apollo::LogEvent>(new apollo::LogEvent(                          \
                               logger, level, __FILE__, __LINE__, 0, apollo::ThreadHelper::ThreadId(), \
                               0, time(0), apollo::ThreadHelper::ThreadName())))                                                       \
         .getEvent()                                                                                   \
@@ -78,4 +78,4 @@ static std::shared_ptr<apollo::Logger> g_logger = LOG_ROOT();
 /// 使用流式方式将FATAL级别的日志写入
 #define LOG_FMT_FATAL(logger, fmt, ...) LOG_FMT_LEVEL(logger, apollo::LogLevel::FATAL, fmt, __VA_ARGS__)
 
-#endif // !__LOG_HPP_
+#endif // !__APOLLO_LOG_HPP_
