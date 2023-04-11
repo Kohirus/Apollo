@@ -87,22 +87,22 @@ public:
     void setRevents(int ev) { revents_ = ev; }
 
     /**
-     * @brief 当前fd上是否没有发生任何事件
+     * @brief 当前fd是否对任何事件都不感兴趣
      * 
      */
     bool isNoneEvent() const { return events_ == kNoneEvent; }
 
     /**
-     * @brief 当前fd上是否正在发生读事件
+     * @brief 当前fd是否对读事件感兴趣
      * 
      */
-    bool isReading() const { return events_ == kReadEvent; }
+    bool isReadEvent() const { return events_ == kReadEvent; }
 
     /**
-     * @brief 当前fd上是否正在发生写事件
+     * @brief 当前fd是否对写事件感兴趣
      * 
      */
-    bool isWriting() const { return events_ == kWriteEvent; }
+    bool isWriteEvent() const { return events_ == kWriteEvent; }
 
     /**
      * @brief 开启fd上的读事件
@@ -134,9 +134,19 @@ public:
      */
     void disableAll();
 
-    int index() const { return index_; }
+    /**
+     * @brief 返回当前Channel对象在poller上的状态
+     * 
+     * @return int 
+     */
+    int status() const { return status_; }
 
-    void setIndex(int idx) { index_ = idx; }
+    /**
+     * @brief 设置当前Channel对象在poller上的状态
+     * 
+     * @param stu 
+     */
+    void setStatus(int stu) { status_ = stu; }
 
     /**
      * @brief 返回Channel所属的事件循环
@@ -175,7 +185,7 @@ private:
 
     int events_;  // fd感兴趣的事件
     int revents_; // fd实际发生的具体的事件
-    int index_;
+    int status_;  // Channel在poller中的状态
 
     std::weak_ptr<void> tie_; // 防止Channel被手动remove
     bool                tied_;
