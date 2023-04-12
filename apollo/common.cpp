@@ -6,7 +6,7 @@
 #include <unistd.h>
 using namespace apollo;
 
-thread_local pid_t       t_tid        = 0;
+thread_local pid_t       t_cachedTid  = 0;
 thread_local std::string t_threadName = "mainThread";
 
 pid_t gettid() {
@@ -14,8 +14,8 @@ pid_t gettid() {
 }
 
 void cacheTid() {
-    if (t_tid == 0) {
-        t_tid = gettid();
+    if (t_cachedTid == 0) {
+        t_cachedTid = gettid();
     }
 }
 
@@ -25,10 +25,10 @@ void setThreadName(std::thread* th, const std::string& name) {
 }
 
 pid_t ThreadHelper::ThreadId() {
-    if (t_tid == 0) {
+    if (__builtin_expect(t_cachedTid == 0, 0)) {
         cacheTid();
     }
-    return t_tid;
+    return t_cachedTid;
 }
 
 const std::string& ThreadHelper::ThreadName() {

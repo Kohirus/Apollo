@@ -1,7 +1,7 @@
 BasedOnStyle: WebKit
 
-# 关闭包含头文件的排序
-SortIncludes: false
+# 包含头文件的排序
+SortIncludes: true
 # 宏对齐
 AlignConsecutiveMacros: true
 # 连续赋值对齐

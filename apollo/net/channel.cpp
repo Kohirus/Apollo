@@ -64,13 +64,11 @@ void Channel::disableAll() {
 }
 
 void Channel::remove() {
-    // TODO: add code
-    // loop_->removeChannel(this);
+    loop_->removeChannel(this);
 }
 
 void Channel::update() {
-    // TODO: 通过Channel所属的EventLoop 调用Poller的相应方法 注册fd所感兴趣的事件
-    // loop_->updateChannel(this);
+    loop_->updateChannel(this);
 }
 
 void Channel::handleEventWithGurad(Timestamp reveiveTime) {
