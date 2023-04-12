@@ -11,7 +11,7 @@ namespace apollo {
  */
 class InetAddress {
 public:
-    explicit InetAddress(uint16_t port, const std::string& ip = "127.0.0.1");
+    explicit InetAddress(uint16_t port = 0, const std::string& ip = "127.0.0.1");
 
     explicit InetAddress(const sockaddr_in& addr)
         : addr_(addr) { }
@@ -43,6 +43,13 @@ public:
      * @return const sockaddr_in* 
      */
     const sockaddr_in* getSockAddr() const { return &addr_; }
+
+    /**
+     * @brief 设置IP地址和端口号
+     * 
+     * @param addr 
+     */
+    void setSockAddr(const sockaddr_in& addr) { addr_ = addr; }
 
 private:
     sockaddr_in addr_;

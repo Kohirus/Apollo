@@ -11,6 +11,7 @@ EventLoopThreadPool::EventLoopThreadPool(EventLoop* baseLoop, const std::string&
 }
 
 void EventLoopThreadPool::setThreadNum(int numThreads) {
+    numThreads_ = numThreads;
 }
 
 void EventLoopThreadPool::start(const ThreadInitCallback& cb) {
@@ -19,8 +20,8 @@ void EventLoopThreadPool::start(const ThreadInitCallback& cb) {
     for (int i = 0; i < numThreads_; ++i) {
         char buf[name_.size() + 32];
         snprintf(buf, sizeof(buf), "%s%d", name_.c_str(), i);
-        EventLoopThreadPtr t(new EventLoopThread(cb, buf));
-        threads_.push_back(t);
+        EventLoopThread* t = new EventLoopThread(cb, buf);
+        threads_.push_back(EventLoopThreadPtr(t));
         // 创建新线程绑定SubLoop 并返回该SubLoop的地址
         loops_.push_back(t->startLoop());
     }
