@@ -29,14 +29,14 @@ public:
     EventLoopThreadPool(EventLoop* baseLoop, const std::string& nameArg);
     EventLoopThreadPool(const EventLoopThreadPool&) = delete;
     EventLoopThreadPool& operator=(const EventLoopThreadPool&) = delete;
-    ~EventLoopThreadPool()                                     = default;
+    ~EventLoopThreadPool();
 
     /**
      * @brief 设置线程数量
      * 
-     * @param numThreads 线程数量，默认是CPU核心数
+     * @param numThreads 线程数量
      */
-    void setThreadNum(int numThreads = std::thread::hardware_concurrency());
+    void setThreadNum(int numThreads);
 
     /**
      * @brief 启动线程池
@@ -80,9 +80,9 @@ private:
     int         numThreads_; // 线程数量
     int         next_;       // 下一个执行的事件循环
 
-    using EventLoopThreadPtr = std::unique_ptr<EventLoopThread>;
-    std::vector<EventLoopThreadPtr> threads_; // 线程对象
-    std::vector<EventLoop*>         loops_;   // 事件循环对象
+    std::vector<std::unique_ptr<EventLoopThread>> threads_; // 线程对象
+
+    std::vector<EventLoop*> loops_; // 事件循环对象
 };
 } // namespace apollo
 

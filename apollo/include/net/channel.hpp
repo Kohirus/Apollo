@@ -60,7 +60,9 @@ public:
     void setErrorCallback(EventCallback cb) { errorCallback_ = std::move(cb); }
 
     /**
-     * @brief 防止当Channel被手动remove掉，Channel还在执行回调操作
+     * @brief 由于Channel中的回调函数都是绑定的TcpConnection的成员函数
+     * 如果TcpConnection对象已经销毁了 那么Channel调用回调时结果就是未知的
+     * @details 连接建立时调用
      * 
      */
     void tie(const std::shared_ptr<void>&);
@@ -96,13 +98,13 @@ public:
      * @brief 当前fd是否对读事件感兴趣
      * 
      */
-    bool isReadEvent() const { return events_ == kReadEvent; }
+    bool isReadEvent() const { return events_ & kReadEvent; }
 
     /**
      * @brief 当前fd是否对写事件感兴趣
      * 
      */
-    bool isWriteEvent() const { return events_ == kWriteEvent; }
+    bool isWriteEvent() const { return events_ & kWriteEvent; }
 
     /**
      * @brief 开启fd上的读事件

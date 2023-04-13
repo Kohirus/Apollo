@@ -5,6 +5,10 @@
 #include <poll.h>
 
 namespace apollo {
+/**
+ * @brief Poll多路复用模型
+ * 
+ */
 class PollPoller : public Poller {
 public:
     PollPoller(EventLoop* loop);

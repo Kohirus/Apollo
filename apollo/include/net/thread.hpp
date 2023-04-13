@@ -8,6 +8,10 @@
 #include <thread>
 
 namespace apollo {
+/**
+ * @brief 线程封装类
+ * 
+ */
 class Thread {
 public:
     using ThreadFunc = std::function<void()>;

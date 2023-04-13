@@ -5,6 +5,10 @@ namespace apollo {
 
 class InetAddress;
 
+/**
+ * @brief 套接字封装类
+ * 
+ */
 class Socket {
 public:
     explicit Socket(int sockfd)

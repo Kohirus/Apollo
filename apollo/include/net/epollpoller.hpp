@@ -7,7 +7,7 @@
 namespace apollo {
 
 /**
- * @brief 
+ * @brief Epoll多路复用模型
  * 
  */
 class EPollPoller : public Poller {

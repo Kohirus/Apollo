@@ -9,6 +9,10 @@ namespace apollo {
 
 class EventLoop;
 
+/**
+ * @brief 连接器类
+ * @details 负责客户端的连接
+ */
 class Accepter {
 public:
     using NewConnectionCallback = std::function<void(int sockfd, const InetAddress&)>;

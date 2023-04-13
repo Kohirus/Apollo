@@ -24,6 +24,7 @@ void Channel::handleEvent(Timestamp reveiveTime) {
     if (tied_) {
         std::shared_ptr<void> guard;
         guard = tie_.lock();
+        // 如果TcpConnection对象还存在 则调用相应回调
         if (guard) {
             handleEventWithGurad(reveiveTime);
         }
@@ -32,7 +33,6 @@ void Channel::handleEvent(Timestamp reveiveTime) {
     }
 }
 
-// ? tie方法何时触发
 void Channel::tie(const std::shared_ptr<void>& obj) {
     tie_  = obj;
     tied_ = true;
