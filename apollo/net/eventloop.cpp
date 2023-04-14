@@ -74,6 +74,7 @@ void EventLoop::loop() {
     }
 
     LOG_FMT_INFO(g_logger, "EventLoop %p stop looping", this);
+    looping_ = false;
 }
 
 void EventLoop::quit() {

@@ -63,6 +63,13 @@ public:
      */
     static int numCreated() { return numCreated_; }
 
+    /**
+     * @brief 获取底层的线程指针
+     * 
+     * @return const std::thread* 
+     */
+    std::thread* getThreadPtr() const { return thread_.get(); }
+
 private:
     /**
      * @brief 设置线程的默认名称

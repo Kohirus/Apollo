@@ -24,9 +24,9 @@ EventLoop* EventLoopThread::startLoop() {
     EventLoop* loop = nullptr;
     {
         std::unique_lock<std::mutex> locker(mtx_);
-        cond_.wait(locker, [&]() -> bool {
-            return loop_ != nullptr;
-        });
+        while (loop_ == nullptr) {
+            cond_.wait(locker);
+        }
         loop = loop_;
     }
 
@@ -34,6 +34,7 @@ EventLoop* EventLoopThread::startLoop() {
 }
 
 void EventLoopThread::threadFunc() {
+    // ThreadHelper::SetThreadName(thread_.getThreadPtr(), thread_.name());
     EventLoop loop;
     if (callback_) {
         callback_(&loop);

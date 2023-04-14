@@ -7,7 +7,7 @@
 using namespace apollo;
 
 thread_local pid_t       t_cachedTid  = 0;
-thread_local std::string t_threadName = "mainThread";
+thread_local std::string t_threadName = "thread";
 
 pid_t gettid() {
     return static_cast<pid_t>(::syscall(SYS_gettid));

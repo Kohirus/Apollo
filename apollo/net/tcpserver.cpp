@@ -1,6 +1,5 @@
 #include "tcpserver.hpp"
 #include "log.hpp"
-#include "tcpconnection.hpp"
 #include <functional>
 #include <strings.h>
 using namespace apollo;
@@ -21,7 +20,7 @@ TcpServer::TcpServer(EventLoop* loop, const InetAddress& localAddr,
     , threadPool_(new EventLoopThreadPool(loop_, name_))
     , connectionCallback_()
     , messageCallback_()
-    , started_(0)
+    , started_(false)
     , nextConnId_(1) {
     accepter_->setNewConnectionCallback(std::bind(
         &TcpServer::newConnection, this,
@@ -43,7 +42,8 @@ void TcpServer::setThreadNum(int numThreads) {
 
 void TcpServer::start() {
     // 防止启动多次
-    if (started_++ == 0) {
+    if (!started_) {
+        started_ = true;
         // 启动线程池
         threadPool_->start(threadInitCallback_);
         // 开启MainLoop上的监听客户端事件
@@ -67,7 +67,7 @@ void TcpServer::newConnection(int sockfd, const InetAddress& peerAddr) {
     sockaddr_in local;
     ::bzero(&local, sizeof(local));
     socklen_t addrlen = sizeof(local);
-    if (::getsockname(sockfd, (sockaddr*)&local, &addrlen) < 0) {
+    if (::getsockname(sockfd, reinterpret_cast<sockaddr*>(&local), &addrlen) < 0) {
         LOG_FMT_ERROR(g_logger, "get socket name error: %d", errno);
     }
     InetAddress localAddr(local);

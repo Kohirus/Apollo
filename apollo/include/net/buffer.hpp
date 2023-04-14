@@ -11,7 +11,7 @@ namespace apollo {
  */
 class Buffer {
 public:
-    static const size_t kCheapPrepend = 0;
+    static const size_t kCheapPrepend = 8;
     static const size_t kInitialSize  = 1024;
 
     explicit Buffer(size_t initialSize = kInitialSize)

@@ -23,7 +23,7 @@ EPollPoller::~EPollPoller() {
 }
 
 Timestamp EPollPoller::poll(int timeoutMs, ChannelList* activeChannels) {
-    LOG_FMT_DEBUG(g_logger, "fd total count: %lu", channels_.size());
+    LOG_FMT_INFO(g_logger, "fd total count: %lu", channels_.size());
 
     int numEvents = ::epoll_wait(epollfd_, &*events_.begin(),
         static_cast<int>(events_.size()), timeoutMs);
@@ -33,13 +33,13 @@ Timestamp EPollPoller::poll(int timeoutMs, ChannelList* activeChannels) {
     int saveErrno = errno; // 多线程时errno值容易被修改
 
     if (numEvents > 0) {
-        LOG_FMT_DEBUG(g_logger, "%d events actived", numEvents);
+        LOG_FMT_INFO(g_logger, "%d events actived", numEvents);
         fillActiveChannels(numEvents, activeChannels);
         if (numEvents == static_cast<int>(events_.size())) {
             events_.resize(events_.size() * 2);
         }
     } else if (numEvents == 0) {
-        LOG_DEBUG(g_logger) << "epoll_wait timeout";
+        LOG_INFO(g_logger) << "epoll_wait timeout";
     } else {
         if (saveErrno != EINTR) {
             errno = saveErrno;
@@ -67,6 +67,7 @@ void EPollPoller::updateChannel(Channel* channel) {
         // Channel对象在epoll中
         if (channel->isNoneEvent()) {
             update(EPOLL_CTL_DEL, channel);
+            channel->setStatus(kDeleted);
         } else {
             update(EPOLL_CTL_MOD, channel);
         }

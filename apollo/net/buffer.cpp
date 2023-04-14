@@ -71,7 +71,7 @@ ssize_t Buffer::writeFd(int fd, int& saveErrno) {
     if (n < 0) {
         saveErrno = errno;
     }
-    return 0;
+    return n;
 }
 
 void Buffer::swap(Buffer& rhs) {

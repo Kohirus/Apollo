@@ -8,10 +8,13 @@
  * @copyright Copyright (c) 2023
  */
 
-#include "log.hpp"
 #include "common.hpp"
+#include "log.hpp"
 #include <iostream>
+#include <thread>
 using namespace std;
+
+static std::shared_ptr<apollo::Logger> biz_logger = LOG_NAME("business");
 
 int main() {
     LOG_DEBUG(g_logger) << "debug log";
@@ -20,5 +23,12 @@ int main() {
     LOG_ERROR(g_logger) << "error log";
     LOG_FATAL(g_logger) << "fatal log";
     LOG_FMT_INFO(g_logger, "%s", "hello logger format");
+    LOG_FMT_INFO(g_logger, "default thread num: %d", std::thread::hardware_concurrency());
+
+    LOG_DEBUG(biz_logger) << "debug log";
+    LOG_INFO(biz_logger) << "info log";
+    LOG_WARN(biz_logger) << "warn log";
+    LOG_ERROR(biz_logger) << "error log";
+    LOG_FATAL(biz_logger) << "fatal log";
     return 0;
 }

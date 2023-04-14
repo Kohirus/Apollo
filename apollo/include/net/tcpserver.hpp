@@ -2,10 +2,12 @@
 #define __APOLLO_TCPSERVER_HPP__
 
 #include "accepter.hpp"
+#include "buffer.hpp"
 #include "callbacks.hpp"
 #include "eventloop.hpp"
 #include "eventloopthreadpool.hpp"
 #include "inetaddress.hpp"
+#include "tcpconnection.hpp"
 #include <atomic>
 #include <functional>
 #include <memory>
@@ -119,7 +121,7 @@ private:
 
     ThreadInitCallback threadInitCallback_; // 线程初始化回调
 
-    std::atomic_int started_; // 服务器是否启动
+    std::atomic_bool started_; // 服务器是否启动
 
     int           nextConnId_;  // 下一个连接ID
     ConnectionMap connections_; // 保存所有客户端连接

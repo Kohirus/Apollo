@@ -11,6 +11,7 @@ Thread::Thread(ThreadFunc func, const std::string& name)
     , tid_(0)
     , func_(std::move(func))
     , name_(name) {
+    setDefaultName();
 }
 
 Thread::~Thread() {
@@ -24,14 +25,12 @@ void Thread::start() {
     sem_t sem;
     sem_init(&sem, false, 0);
 
-    thread_ = std::make_shared<std::thread>([&]() {
+    thread_ = std::shared_ptr<std::thread>(new std::thread([&]() {
         // 获取线程的tid值
         tid_ = ThreadHelper::ThreadId();
-        // 设置线程名称
-        ThreadHelper::SetThreadName(thread_.get(), name_);
         sem_post(&sem);
         func_();
-    });
+    }));
 
     // 等待上方线程获取其tid
     sem_wait(&sem);

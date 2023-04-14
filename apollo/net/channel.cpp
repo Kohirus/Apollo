@@ -82,7 +82,7 @@ void Channel::handleEventWithGurad(Timestamp reveiveTime) {
         if (errorCallback_) errorCallback_();
     }
 
-    if (revents_ & (EPOLLIN & EPOLLPRI)) {
+    if (revents_ & (EPOLLIN | EPOLLPRI)) {
         if (readCallback_) readCallback_(reveiveTime);
     }
 
