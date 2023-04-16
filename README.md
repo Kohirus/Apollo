@@ -1,14 +1,45 @@
 # Apollo
 
-使用 C/C++ 开发的一款高性能的后端分布式服务器网络框架。
-
-## 项目要点
+使用 C/C++ 开发的一款高性能的后端分布式服务器网络框架。该项目具有如下要点：
 
 - 使用 C++11 重写并简化 [muduo](https://github.com/chenshuo/muduo) 网络库；
 - 仿写了 [tcmalloc](https://github.com/google/tcmalloc) 的高并发内存池；
 - 加入了 [sylar](https://github.com/sylar-yin/sylar) 的日志模块并将其改进为异步日志；
-- 使用到了 protobuf 和 Zookeeper 来作为分布式协调服务；
-- 使用 Nginx 来处理集群行为；
+- 使用到了 [protobuf](https://github.com/protocolbuffers/protobuf) 和 [Zookeeper](https://zookeeper.apache.org/) 来作为分布式协调服务；
+- 使用 [Nginx](http://nginx.org/en/index.html) 来处理集群行为；
+
+## 项目部署
+
+### 1. 开发环境
+
+- OS：Ubuntu 22.04 LTS
+- 构建工具：CMake 3.16.3
+- 编译器：GCC 9.4.0
+- 调试器：GDB 9.2
+- 第三方模块：
+    - [json.cpp](https://github.com/nlohmann/json)：3.11.2
+    - protobuf：3.17.0
+    - ZooKeeper
+
+### 2. 部署方法
+
+如果不需要采用 tcmallloc 内存池模块，而是采用系统原生的 malloc/free，那么删除项目根路径下的 CMakeLists.txt 文件中的如下内容即可：
+
+```cmake
+add_definitions(-DTCMALLOC)
+```
+
+如果需要采用 poll 而非 epoll 来作为 I/O 复用模型，那么需要在根路径下的 CMakeLists.txt 文件中添加如下内容：
+
+```cmake
+add_definitions(-DAPLUSEPOLL)
+```
+
+在项目文件夹下执行如下命令即可自动进行编译：
+
+```shell
+./autobuild.sh
+```
 
 ## 内存池模块
 
@@ -24,7 +55,7 @@
 该内存池的整体架构如下图所示：
 
 <div align="center">
-<img src="./screenshot/mempool.png" style="zoom:60%"/>
+<img src="./screenshot/mempool.png" width="55%" height="55%"/>
 </div>
 
 其主要由以下三个部分组成：
@@ -44,7 +75,7 @@
 Thread Cache 的结构如下图所示：
 
 <div align="center">
-<img src="./screenshot/threadcache.png" style="zoom:60%"/>
+<img src="./screenshot/threadcache.png" width="55%" height="55%"/>
 </div>
 
 通过使用**字节对齐**的方法来减少哈希桶的数目，并且进一步增加内存利用率，在设计时，让不同的范围的字节数按照不同的对齐数进行对齐，具体的对齐方式如下：
@@ -77,7 +108,7 @@ Central Cache 与 Thread Cache 不同之处有两点：
 其结构如下所示：
 
 <div align="center">
-<img src="./screenshot/centralcache.png" style="zoom:50%"/>
+<img src="./screenshot/centralcache.png" width="65%" height="65%"/>
 </div>
 
 由于 Central Cache 是所有线程共享的，多个 Thread Cache 可能在同一时刻向 Central Cache 申请内存块，因此为了保证线程安全，需要加锁控制。此外，由于只有多个线程同时访问 Central Cache 的同一个桶时才会存在锁竞争，因此无需用锁来锁住所有哈希桶，只需锁住当前所访问的哈希桶即可。
@@ -97,7 +128,7 @@ Page Cache 的结构与 Central Cache 一样，都是哈希桶的结构，并且
 其结构如下图所示：
 
 <div align="center">
-<img src="./screenshot/pagecache.png" style="zoom:60%"/>
+<img src="./screenshot/pagecache.png" width="65%" height="65%"/>
 </div>
 
 当每个线程的 Thread Cache 没有内存时都会向 Central Cache 申请，此时多个线程的 Thread Cache 如果访问的不是 Central Cache 的同一个桶，那么这些线程是可以同时进行访问的。这时 Central Cache 的多个桶就可能同时向 Page Cache 申请内存，所以 Page Cache 也是存在线程安全问题的，因此在访问 Page Cache 时也必须要加锁。
@@ -117,13 +148,13 @@ Page Cache 的结构与 Central Cache 一样，都是哈希桶的结构，并且
 该网络库采用的是 Reactor 事件处理模式。在《Linux高性能服务器编程》中，对于 Reactor 模型的描述如下：**主线程（即 I/O 处理单元）只负责监听文件描述符上是否有事件发生，有的话就立即将该事件通知工作线程（即逻辑单元）。此外，主线程不做任何其他实质性的工作。读写数据、接受新的连接，以及处理客户请求均在工作线程中完成**。Reactor 模式的时序图如下：
 
 <div align="center">
-<img src="./screenshot/reactor-sequence.png" style="zoom:60%"/>
+<img src="./screenshot/reactor-sequence.png" width="65%" height="65%"/>
 </div>
 
 而 muduo 网络库的时序图则如下图所示：
 
 <div align="center">
-<img src="./screenshot/muduo-sequence.png" style="zoom:60%">
+<img src="./screenshot/muduo-sequence.png" width="65%" height="65%">
 </div>
 
 其次，在《Linux高性能服务器编程》一书中还提到了**半同步/半异步**的并发模式，注意，此处的“异步”与 I/O 模型中的异步并不相同，I/O 模型中的“同步”和“异步”的区分是内核应用程序通知的是何种事件（就绪事件还是完成事件），以及由谁来完成 I/O 读写（是应用程序还是内核）。而在并发模式中，“同步”指的是完全按照代码序列的顺序执行，“异步”则指的是程序的执行需要由系统事件来驱动，比如常见的系统终端、信号等。
@@ -131,7 +162,7 @@ Page Cache 的结构与 Central Cache 一样，都是哈希桶的结构，并且
 而 muduo 库所采用的便是高效的半同步/半异步模式，其结构如下图所示：
 
 <div align="center">
-<img src="./screenshot/half-sync-asyn.png" style="zoom:60%"/>
+<img src="./screenshot/half-sync-asyn.png" width="65%" height="65%"/>
 </div>
 
 上图中，主线程只管理监听 socket，连接 socket 由工作线程来管理。当有新的连接到来时，主线程就接受并将新返回的连接 socket 派发给某个工作线程，此后在该 socket 上的任何 I/O 操作都由被选中的工作线程来处理，直到客户关闭连接。主线程向工作线程派发 socket 的最简单的方式，是往它和工作线程之间的管道写数据。工作线程检测到管道上有数据可读时，就分析是否是一个新的客户连接请求到来。如果是，则把新 socket 上的读写事件注册到自己的 epoll 内核事件表中。上图中的每个线程都维持自己的事件循环，它们各自独立的监听不同的事件。因此，在这种高效的半同步/半异步模式中，每个线程都工作在异步模式，所以它并非严格意义上的半同步/半异步模式。
@@ -145,7 +176,7 @@ Page Cache 的结构与 Central Cache 一样，都是哈希桶的结构，并且
 对于 “Single Reactor - Single Thread” 模型而言，其通常只有一个 epoll 对象，所有的接收客户端连接、客户端读取、客户端写入操作都包含在一个线程内，如下图所示：
 
 <div align="center">
-<img src="./screenshot/reactor-thread.png" style="zoom:50%"/>
+<img src="./screenshot/reactor-thread.png" width="65%" height="65%"/>
 </div>
 
 但在目前的单线程 Reactor 模式中，不仅 I/O 操作在该 Reactor 线程上，连非 I/O 的业务操作也在该线程上进行处理了，这可能会大大延迟 I/O 请求的响应。为了提高服务器的性能，我们需要将非 I/O 的业务逻辑操作从 Reactor 线程中移动到工作线程中进行处理。
@@ -153,7 +184,7 @@ Page Cache 的结构与 Central Cache 一样，都是哈希桶的结构，并且
 为此，可以通过使用线程池模型的方法来改进，即 “Single Reactor - Multi Threads” 模型，其结构如下图所示。将读写的业务逻辑交给具体的线程池来实现，这样可以显示 reactor 线程对 IO 的响应，以此提升系统性能。
 
 <div align="center">
-<img src="./screenshot/reactor-threads.png" style="zoom:50%"/>
+<img src="./screenshot/reactor-threads.png" width="65%" height="65%"/>
 </div>
 
 尽管现在已经将所有的非 I/O 操作交给了线程池来处理，但是所有的 I/O 操作依然由 Reactor 单线程执行，在高负载、高并发或大数据量的应用场景，依然较容易成为瓶颈。
@@ -161,7 +192,7 @@ Page Cache 的结构与 Central Cache 一样，都是哈希桶的结构，并且
 为了继续提升服务器的性能，进而改造出了如下图所示的 “Multi Reactors - Multi Threads” 模型：
 
 <div align="center">
-<img src="./screenshot/reactors-threads.png" style="zoom:50%"/>
+<img src="./screenshot/reactors-threads.png" width="65%" height="65%"/>
 </div>
 
 在这种模型中，主要分为两个部分：mainReactor、subReactors。 mainReactor 主要负责接收客户端的连接，然后将建立的客户端连接通过负载均衡的方式分发给 subReactors，subReactors 则负责具体的每个连接的读写，而对于非 IO 的操作，依然交给工作线程池去做，对逻辑进行解耦。
@@ -207,4 +238,60 @@ epoll 对文件描述符的操作有两种模式：LT（Level Trigger，电平�
 
 ## 日志模块
 
-## 分布式
+## RPC模块
+
+RPC（Remote Procedure Call），即远程过程调用，也就是说两台服务器 A，B，一个应用部署在 A 服务器上，想要调用 B 服务器上应用提供的函数/方法，由于不在一个内存空间，不能直接调用，需要通过网络来表达调用的语义和传达调用的数据。RPC 的主要功能目标是让构建分布式计算（应用）更容易，在提供强大的远程调用能力时不损失本地调用的语义简洁性。为实现该目标，RPC 框架需提供一种透明调用机制让使用者不必显式的区分本地调用和远程调用。
+
+### 1. 分布式
+
+考虑一个聊天业务，我们对其进行子模块划分，那么可以大致分为：用户管理、好友管理、群组管理、消息管理、文件管理，其中每一个模块都包含了一个特定的业务。将该服务器部署在一个单机上面，如下图所示：
+
+<div align="center">
+<img src="./screenshot/single-server.png" width="45%" height="45%"/>
+</div>
+
+上图中所示的单机服务器模型存在如下缺点：
+
+1. 受到硬件资源的限制，聊天服务器所能承受的用户的并发量较低；
+2. 修改任意模块的代码，会导致整个项目代码的重新编译、部署。项目如果过大，会很耗时；
+3. 在系统中，有些模块是属于 CPU 密集型的，而有些模块则是属于 I/O 密集型的，造成各个模块对于硬件资源的需求各不相同，而单机服务器只能给所有模块提供同一种硬件资源，无法做到硬件资源的特化；
+4. 如果服务器出现异常，那么整个服务都会挂掉；
+
+为了解决单机服务器所带来的并发量较低的缺陷，我们可以采用集群的方法，增加服务器的数量，同时通过一个负载均衡服务器来分发用户请求即可。常见的硬件负载均衡器有：F5、A10 等，软件层面的负载均衡服务器包括 LVS、Nginx、HAproxy 等。集群服务器模型的结构则如下图所示：
+
+<div align="center">
+<img src="./screenshot/cluster.png" width="65%" height="65%"/>
+</div>
+
+对于集群服务器模型而言，它解决了硬件资源受限所导致的用户并发量问题，此外如果其中一台服务器挂掉，还有另外其它几台服务器可以正常提供服务。但是对于项目编译、部署的问题而言，却并未得到改善，项目要分别在每个机器上进行编译、部署，反而变得更加麻烦了。对于不同模块对于硬件资源的需求也并未得到解决。此外，对于一些并发量较低的模块，可能并不需要做到高并发，也就无需通过负载均衡器将用户请求分发到不同的服务器中，但是对于集群模型而言，每一个模块之间都是均衡的，并未做到模块的特化。
+
+为了改进上述缺点，我们需要将其改进为分布式模型，其结构如下图所示。即将不同的模块部署在不同的服务器上，同时对于并发量较大的模块，我们可以通过集群部署来提升它的并发量，此外对于不同的模块，也可以提供不同的硬件资源，同时修改一个模块的代码也无需再编译整个项目，仅仅编译该模块即可：
+
+<div align="center">
+<img src="./screenshot/distributed.png" width="65%" height="65%"/>
+</div>
+
+总结而言，集群和分布式的区别如下：
+
+- **集群**：每一台服务器独立运行一个工程的所有模块。
+- **分布式**：一个工程拆分了很多模块，每一个模块独立部署运行在一个服务器主机上，所有服务器协同工
+作共同提供服务，每一台服务器称作分布式的一个节点，根据节点的并发要求，对一个节点可以再做节点模块集群部署。
+
+### 2. RPC
+
+尽管分布式模型存在许多优点，但是考虑如下场景：用户正在访问用户管理模块，此时需要获取所有的好友信息，那么需要用到好友管理模块的内容。但是由于分布式部署的原因，用户管理模块和好友管理模块部署在不同的两个分布式节点上，即两台主机上。此时用户管理主机应该如何调用好友管理主机上的相应的业务方法？
+
+这时就需要使用到 RPC 方法，为使用者提供一种透明调用机制而不必显式的区分本地调用和远程调用。RPC 方法的交互过程如下图所示：
+
+<div align="center">
+<img src="./screenshot/rpc-routine.png"/>
+</div>
+
+由于底层网络通信框架使用的是运输层协议，只能发送字节流，因此会涉及到对象的序列化/反序列化问题，即上图中所示的黄色部分，而常见的网络数据传输格式包括如下三种：
+
+- XML：一种通用和轻量级的数据交换格式语言，是指可扩展标记语言以文本结构进行存储。
+- JSON：一种通用和轻量级的数据交换格式，也是以文本的结构进行存储，是一种简单的消息格式。JSON 作为数据包格式传输时具有更高的效率，这是因为 JSON 不像 XML 那样需要有严格的闭合标签，这就让有效数据量与总数据包比有着显著的提升，从而减少同等数据流量的情况下网络的传输压力。
+- Protobuf：是 Google 开发的一种独立和轻量级的数据交换格式，以二进制结构进行存储，用于不同服务之间序列化数据。它是一种轻便高效的结构化数据存储格式，可以用于结构化数据串行化，或者序列化，可用于通讯协议、数据存储等领域的语言无关、平台无关、可扩展的序列化结构数据格式。
+
+而该项目便是使用 Protobuf 来进行消息的序列化和反序列化。
+

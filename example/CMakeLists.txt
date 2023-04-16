@@ -9,3 +9,5 @@ target_link_libraries(log_test mempool apollo)
 aux_source_directory(./server SVR_LIST)
 add_executable(server ${SVR_LIST})
 target_link_libraries(server mempool apollo)
+
+add_subdirectory(rpc)
