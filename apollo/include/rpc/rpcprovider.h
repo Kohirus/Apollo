@@ -17,6 +17,8 @@ class EventLoop;
 class RpcProvider {
 public:
     RpcProvider();
+    RpcProvider(const RpcProvider&) = delete;
+    RpcProvider& operator=(const RpcProvider&) = delete;
     ~RpcProvider();
 
     /**
@@ -47,6 +49,12 @@ private:
      * @param receiveTime 消息接收时间
      */
     void onMessage(const TcpConnectionPtr& conn, Buffer* buffer, Timestamp receiveTime);
+
+    /**
+     * @brief 序列化RPC的响应和网络发送
+     * 
+     */
+    void sendRpcResponse(const TcpConnectionPtr&, google::protobuf::Message*);
 
 private:
     std::unique_ptr<EventLoop> loop_; // 事件循环

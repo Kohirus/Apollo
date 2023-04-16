@@ -94,4 +94,46 @@ void RpcProvider::onMessage(const TcpConnectionPtr& conn,
     LOG_FMT_DEBUG(g_rpclogger, "receive rpc header: [%d][%s][%s][%s][%d][%s]",
         headerSize, content.c_str(), serviceName.c_str(),
         methodName.c_str(), argsSize, argsStr.c_str());
+
+    // 获取service对象和method对象
+    auto iter = serviceMap_.find(serviceName);
+    if (iter == serviceMap_.end()) {
+        LOG_FMT_ERROR(g_rpclogger, "%s is not exist", serviceName.c_str());
+        return;
+    }
+
+    auto mt_iter = iter->second.methodMap.find(methodName);
+    if (mt_iter == iter->second.methodMap.end()) {
+        LOG_FMT_ERROR(g_rpclogger, "%s:%s is not exist",
+            serviceName.c_str(), methodName.c_str());
+        return;
+    }
+
+    Service*                service    = iter->second.service;
+    const MethodDescriptor* methodDesc = mt_iter->second;
+
+    // 生成RPC方法调用的请求和响应
+    Message* request = service->GetRequestPrototype(methodDesc).New();
+    if (!request->ParseFromString(argsStr)) {
+        LOG_FMT_ERROR(g_rpclogger, "request parse error: %s", argsStr.c_str());
+        return;
+    }
+
+    // 根据远端RPC请求 调用当前RPC节点上发布的方法
+    Message* response = service->GetResponsePrototype(methodDesc).New();
+    Closure* done     = NewCallback<RpcProvider,
+        const TcpConnectionPtr&, Message*>(
+        this, &RpcProvider::sendRpcResponse, conn, response);
+    service->CallMethod(methodDesc, nullptr, request, response, done);
+}
+
+void RpcProvider::sendRpcResponse(const TcpConnectionPtr& conn, Message* response) {
+    std::string responseStr;
+    if (response->SerializeToString(&responseStr)) {
+        // 通过网络将RPC方法执行的结果发送回RPC的调用方
+        conn->send(responseStr);
+    } else {
+        LOG_ERROR(g_rpclogger) << "failed to serial string";
+    }
+    conn->shutdown(); // 由RPC提供方主动断开连接
 }
