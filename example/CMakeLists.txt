@@ -10,4 +10,8 @@ aux_source_directory(./server SVR_LIST)
 add_executable(server ${SVR_LIST})
 target_link_libraries(server mempool apollo)
 
+aux_source_directory(./client CLI_LIST)
+add_executable(client ${CLI_LIST})
+target_link_libraries(client mempool apollo)
+
 add_subdirectory(rpc)

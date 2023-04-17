@@ -77,6 +77,13 @@ void TcpConnection::connectDestoryed() {
     channel_->remove();
 }
 
+void TcpConnection::forceClose() {
+    if (state_ == kConnected || state_ == kDisconnecting) {
+        setState(kDisconnecting);
+        loop_->queueInLoop(std::bind(&TcpConnection::forceCloseInLoop, shared_from_this()));
+    }
+}
+
 void TcpConnection::handleRead(Timestamp receiveTime) {
     int saveErrno = 0;
 
@@ -207,5 +214,11 @@ void TcpConnection::shutdownInLoop() {
     if (!channel_->isWriteEvent()) {
         // 说明输出缓冲区的数据已经发送完成
         socket_->shutdownWrite();
+    }
+}
+
+void TcpConnection::forceCloseInLoop() {
+    if (state_ == kConnected || state_ == kDisconnecting) {
+        handleClose();
     }
 }

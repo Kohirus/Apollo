@@ -10,7 +10,7 @@ using namespace apollo;
  * 
  * @return int 返回套接字描述符
  */
-int createNonblocking() {
+static int createNonblocking() {
     int sockfd = ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
     if (sockfd < 0) {
         LOG_FMT_FATAL(g_logger, "failed to create socket, errno: %d", errno);

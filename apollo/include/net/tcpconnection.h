@@ -130,6 +130,12 @@ public:
      */
     void connectDestoryed();
 
+    /**
+     * @brief 强制关闭连接
+     * 
+     */
+    void forceClose();
+
 private:
     /**
      * @brief 连接状态
@@ -175,7 +181,17 @@ private:
      */
     void sendInLoop(const void* message, size_t len);
 
+    /**
+     * @brief 在事件循环中关闭连接
+     * 
+     */
     void shutdownInLoop();
+
+    /**
+     * @brief 在事件循环中强制关闭连接
+     * 
+     */
+    void forceCloseInLoop();
 
     /**
      * @brief 设置连接状态
