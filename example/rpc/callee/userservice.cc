@@ -39,7 +39,7 @@ public:
     }
 };
 
-int main(int argc, char* argv[]) {
+int main() {
     // 把UserService对象发布到RPC节点上
     RpcProvider provider;
     provider.notifyService(new UserService());

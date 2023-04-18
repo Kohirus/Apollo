@@ -32,6 +32,8 @@ void RpcProvider::notifyService(Service* service) {
     }
     info.service = service;
     serviceMap_.insert({ serviceName, info });
+
+    LOG_FMT_INFO(g_rpclogger, "publish servic: [%s][%d]", serviceName.c_str(), methondCnt);
 }
 
 void RpcProvider::run() {
@@ -128,6 +130,8 @@ void RpcProvider::onMessage(const TcpConnectionPtr& conn,
 }
 
 void RpcProvider::sendRpcResponse(const TcpConnectionPtr& conn, Message* response) {
+    LOG_INFO(g_rpclogger) << "send rpc response";
+
     std::string responseStr;
     if (response->SerializeToString(&responseStr)) {
         // 通过网络将RPC方法执行的结果发送回RPC的调用方

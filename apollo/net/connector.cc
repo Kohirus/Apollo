@@ -13,7 +13,8 @@ using namespace apollo;
  * @return int 返回套接字描述符
  */
 static int createNonblocking() {
-    int sockfd = ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
+    // int sockfd = ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
+    int sockfd = ::socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
     if (sockfd < 0) {
         LOG_FMT_FATAL(g_logger, "failed to create socket, errno: %d", errno);
     }
@@ -85,12 +86,14 @@ void Connector::stopInLoop() {
 void Connector::connect() {
     int sockfd    = createNonblocking();
     int ret       = ::connect(sockfd, (sockaddr*)(serverAddr_.getSockAddr()), sizeof(sockaddr_in));
+    LOG_INFO(g_logger) << "connect result: " << ret;
     int saveErrno = (ret == 0) ? 0 : errno;
     switch (saveErrno) {
     case 0:
     case EINPROGRESS: // 正在连接
     case EINTR:       // 阻塞于慢系统调用时，捕获到中断信号
     case EISCONN:     // 连接成功
+        LOG_INFO(g_logger) << "connect errno: " << saveErrno;
         connecting(sockfd);
         break;
     case EAGAIN:        // 临时端口不足
@@ -118,6 +121,7 @@ void Connector::connect() {
 }
 
 void Connector::connecting(int sockfd) {
+    LOG_FMT_INFO(g_logger, "client connecting: %d", sockfd);
     setState(kConnecting);
     channel_.reset(new Channel(loop_, sockfd));
     channel_->setWriteCallback(std::bind(&Connector::handleWrite, this));
