@@ -3,8 +3,16 @@ project(apollo CXX)
 
 # 生成compile_commadns.json文件
 set(CMAKE_EXPORT_COMPILE_COMMANDS True)
-# 启用自定义内存池
-add_definitions(-DTCMALLOC)
+
+option(TCMALLOC "use tcmalloc" ON)
+option(APLUSEPOLL "use poll" OFF)
+if(TCMALLOC)
+    add_definitions(-DTCMALLOC)
+endif()
+if(APLUSEPOLL)
+    add_definitions(-DAPLUSEPOLL)
+endif()
+
 # 设置语言标准
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)

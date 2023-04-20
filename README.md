@@ -6,7 +6,6 @@
 - 仿写了 [tcmalloc](https://github.com/google/tcmalloc) 的高并发内存池；
 - 加入了 [sylar](https://github.com/sylar-yin/sylar) 的日志模块并将其改进为异步日志；
 - 使用到了 [protobuf](https://github.com/protocolbuffers/protobuf) 和 [Zookeeper](https://zookeeper.apache.org/) 来作为分布式协调服务；
-- 使用 [Nginx](http://nginx.org/en/index.html) 来处理集群行为；
 
 ## 项目部署
 
@@ -19,26 +18,238 @@
 - 第三方模块：
     - [json.cpp](https://github.com/nlohmann/json)：3.11.2
     - protobuf：3.17.0
-    - ZooKeeper
+    - ZooKeeper：3.4.10
 
 ### 2. 部署方法
 
-如果不需要采用 tcmallloc 内存池模块，而是采用系统原生的 malloc/free，那么删除项目根路径下的 CMakeLists.txt 文件中的如下内容即可：
+可以运行 `autobuild.sh` 直接进行编译。或者创建 `build` 目录并进入，然后输入如下命令进行编译：
 
-```cmake
-add_definitions(-DTCMALLOC)
+```sh
+cmake ..
+make
 ```
 
-如果需要采用 poll 而非 epoll 来作为 I/O 复用模型，那么需要在根路径下的 CMakeLists.txt 文件中添加如下内容：
+如果不需要采用 tcmallloc 内存池模块，而是采用系统原生的 malloc/free，那么更改项目根路径下的 CMakeLists.txt 文件中的如下内容即可：
 
 ```cmake
-add_definitions(-DAPLUSEPOLL)
+# option(TCMALLOC "use tcmalloc" ON) 
+option(TCMALLOC "use tcmalloc" OFF)
 ```
 
-在项目文件夹下执行如下命令即可自动进行编译：
+或者进入 build 目录使用如下命令：
 
-```shell
-./autobuild.sh
+```sh
+cmake .. -DTCMALLOC=ON
+make
+```
+
+如果需要采用 poll 而非 epoll 来作为 I/O 复用模型，那么修改根路径下的 CMakeLists.txt 文件中的如下内容即可：
+
+```cmake
+# option(APLUSEPOLL "use poll" OFF)
+option(APLUSEPOLL "use poll" ON)
+```
+
+或者进入 build 目录使用如下命令：
+
+```sh
+cmake .. -DAPLUSEPOLL=ON
+make
+```
+
+> 默认情况下，运行 autobuild.sh 文件时会启用 tcmalloc 内存池，同时使用 epoll 来作为 I/O 复用模型。
+
+注意，使用该框架时需要在可执行文件的所在路径下添加 `config.json` 配置文件，以配置日志、节点服务器、发现服务器等信息。
+
+### 3. 配置文件
+
+配置文件位于可执行文件的所在路径下，且名为 `config.json`，如下是其示例配置：
+
+```json
+{
+  "log": [
+    {
+      "name": "root",
+      "level": "INFO",
+      "formatter": "%d{%Y-%m-%d %H:%M:%S}%T%t%T%c%T[%p]%T%f:%l%T%m%n",
+      "appenders": [
+        {
+          "type": "file",
+          "file": "./log/root.txt",
+          "async": false
+        },
+        {
+          "type": "stdout"
+        }
+      ]
+    },
+    {
+      "name": "rpc",
+      "level": "DEBUG",
+      "formatter": "%d{%Y-%m-%d %H:%M:%S}%T%t%T%c%T[%p]%T%f:%l%T%m%n",
+      "appenders": [
+        {
+          "type": "file",
+          "file": "./log/rpc.txt",
+          "async": false
+        }
+      ]
+    }
+  ],
+  "rpc": {
+    "ip": "127.0.0.1",
+    "port": 8000,
+    "thread": 4
+  },
+  "zookeeper": {
+    "ip": "127.0.0.1",
+    "port": 5000
+  }
+}
+```
+
+其中，配置信息主要由如下三部分组成：
+
+- log：日志配置信息
+    - name：日志名称
+    - level：日志等级，支持DEBUG、INFO、WARN、ERROR、FATAL
+    - formatter：日志格式
+    - appenders：日志输出目的地，可以配置多个
+        - type：日志类型，支持file(文件)、stdout(标准输出)
+        - file：文件名称
+        - async：是否为异步日志(目前尚未支持)
+- rpc：RPC节点配置信息
+    - ip：IP地址
+    - port：端口号
+    - thread：线程数目
+- zookeeper：发现服务器的配置信息
+    - ip：IP地址
+    - port：端口号
+
+对于日志格式而言，所支持的字段如下：
+
+| 格式化字符 | 含义     |
+| ---------- | -------- |
+| %m         | 消息内容 |
+| %p         | 日志等级 |
+| %c         | 日志名称 |
+| %t         | 线程ID   |
+| %n         | 换行符   |
+| %d         | 日志时间 |
+| %f         | 文件名   |
+| %l         | 行号     |
+| %T         | 制表符   |
+| %N         | 线程名称 |
+
+> 时间的格式化字符见 `strftime` 函数。
+
+### 4. 如何使用
+
+首先需要通信双方约定消息格式，示例文件如下，其中 `option cc_generic_services = true` 必须开启：
+
+```proto
+syntax = "proto3";
+
+package fixbug;
+
+option cc_generic_services = true;
+
+message ResultCode {
+    int32 errcode = 1;
+    bytes errmsg = 2;
+}
+
+message LoginRequest {
+    bytes name = 1;
+    bytes pwd = 2;
+}
+
+message LoginResponse {
+    ResultCode result = 1;
+    bool success = 2;
+}
+
+service UserServiceRpc {
+    rpc Login(LoginRequest) returns(LoginResponse);
+}
+```
+
+然后通过如下命令在当前路径下生成相应的头文件和源文件，该头文件中会包含两个类：`UserServiceRpc` 和 `UserServiceRpc_Stub`：
+
+```sh
+proto xxx.proto --cpp_out=./
+```
+
+对于服务提供方而言，需要继承 `UserServiceRpc` 类，并重写相应的方法，如下所示：
+
+```c++
+class UserService : public UserServiceRpc {
+  bool Login(const std::string& name, const std::string& pwd) {
+    // 实现业务方法...
+
+    return true;
+  }
+
+  // 重新基类方法
+  void Login(::google::protobuf::RpcController* controller,
+    const ::fixbug::LoginRequest*             request,
+    ::fixbug::LoginResponse*                  response,
+    ::google::protobuf::Closure*              done) override {
+    // 通过request参数获取请求方的函数参数
+    std::string name = request->name();
+    std::string pwd  = request->pwd();
+
+    // 执行本地业务
+    bool res = Login(name, pwd);
+
+    // 将响应结果写入response参数
+    fixbug::ResultCode* code = response->mutable_result();
+    code->set_errcode(0);
+    code->set_errmsg("");
+    response->set_success(res);
+
+    // 执行回调操作
+    done->Run();
+  }
+};
+
+int main() {
+  // 把UserService对象发布到RPC节点上
+  RpcProvider provider;
+  provider.notifyService(new UserService());
+
+  // 启动一个rpc服务发布节点
+  provider.run();
+
+  return 0;
+}
+```
+
+对于服务请求方而言，实例化一个 `UserServiceRpc_Stub` 对象，然后将函数参数放入到 request 对象中，然后通过 `UserService_Stub` 对象执行远程调用即可，最终通过 RpcControllerImpl 得知远程调用是否成功，如果成功则通过 response 对象取出服务请求的结果即可，示例代码如下：
+
+```c++
+int main() {
+  fixbug::UserServiceRpc_Stub stub(new apollo::RpcChannelImpl);
+  fixbug::LoginRequest        request;
+  request.set_name("zhang san");
+  request.set_pwd("123456");
+  fixbug::LoginResponse response;
+  // 发起RPC同步调用
+  apollo::RpcControllerImpl controller;
+  stub.Login(&controller, &request, &response, nullptr);
+
+  if (controller.Failed()) {
+      std::cout << controller.ErrorText() << std::endl;
+  } else {
+      // RPC调用完成 读取结果
+      if (response.result().errcode() == 0) {
+          std::cout << "rpc login response: " << response.success() << std::endl;
+      } else {
+          std::cout << "failed to rpc login: " << response.result().errmsg() << std::endl;
+      }
+  }
+  return 0;
+}
 ```
 
 ## 内存池模块
@@ -55,7 +266,7 @@ add_definitions(-DAPLUSEPOLL)
 该内存池的整体架构如下图所示：
 
 <div align="center">
-<img src="./screenshot/mempool.png" width="55%" height="55%"/>
+<img src="./screenshot/mempool.png" width="50%" height="50%"/>
 </div>
 
 其主要由以下三个部分组成：
@@ -148,13 +359,13 @@ Page Cache 的结构与 Central Cache 一样，都是哈希桶的结构，并且
 该网络库采用的是 Reactor 事件处理模式。在《Linux高性能服务器编程》中，对于 Reactor 模型的描述如下：**主线程（即 I/O 处理单元）只负责监听文件描述符上是否有事件发生，有的话就立即将该事件通知工作线程（即逻辑单元）。此外，主线程不做任何其他实质性的工作。读写数据、接受新的连接，以及处理客户请求均在工作线程中完成**。Reactor 模式的时序图如下：
 
 <div align="center">
-<img src="./screenshot/reactor-sequence.png" width="65%" height="65%"/>
+<img src="./screenshot/reactor-sequence.png" width="80%" height="80%"/>
 </div>
 
 而 muduo 网络库的时序图则如下图所示：
 
 <div align="center">
-<img src="./screenshot/muduo-sequence.png" width="65%" height="65%">
+<img src="./screenshot/muduo-sequence.png" width="85%" height="85%">
 </div>
 
 其次，在《Linux高性能服务器编程》一书中还提到了**半同步/半异步**的并发模式，注意，此处的“异步”与 I/O 模型中的异步并不相同，I/O 模型中的“同步”和“异步”的区分是内核应用程序通知的是何种事件（就绪事件还是完成事件），以及由谁来完成 I/O 读写（是应用程序还是内核）。而在并发模式中，“同步”指的是完全按照代码序列的顺序执行，“异步”则指的是程序的执行需要由系统事件来驱动，比如常见的系统终端、信号等。
@@ -162,7 +373,7 @@ Page Cache 的结构与 Central Cache 一样，都是哈希桶的结构，并且
 而 muduo 库所采用的便是高效的半同步/半异步模式，其结构如下图所示：
 
 <div align="center">
-<img src="./screenshot/half-sync-asyn.png" width="65%" height="65%"/>
+<img src="./screenshot/half-sync-asyn.png" width="75%" height="75%"/>
 </div>
 
 上图中，主线程只管理监听 socket，连接 socket 由工作线程来管理。当有新的连接到来时，主线程就接受并将新返回的连接 socket 派发给某个工作线程，此后在该 socket 上的任何 I/O 操作都由被选中的工作线程来处理，直到客户关闭连接。主线程向工作线程派发 socket 的最简单的方式，是往它和工作线程之间的管道写数据。工作线程检测到管道上有数据可读时，就分析是否是一个新的客户连接请求到来。如果是，则把新 socket 上的读写事件注册到自己的 epoll 内核事件表中。上图中的每个线程都维持自己的事件循环，它们各自独立的监听不同的事件。因此，在这种高效的半同步/半异步模式中，每个线程都工作在异步模式，所以它并非严格意义上的半同步/半异步模式。
@@ -192,7 +403,7 @@ Page Cache 的结构与 Central Cache 一样，都是哈希桶的结构，并且
 为了继续提升服务器的性能，进而改造出了如下图所示的 “Multi Reactors - Multi Threads” 模型：
 
 <div align="center">
-<img src="./screenshot/reactors-threads.png" width="65%" height="65%"/>
+<img src="./screenshot/reactors-threads.png" width="75%" height="75%"/>
 </div>
 
 在这种模型中，主要分为两个部分：mainReactor、subReactors。 mainReactor 主要负责接收客户端的连接，然后将建立的客户端连接通过负载均衡的方式分发给 subReactors，subReactors 则负责具体的每个连接的读写，而对于非 IO 的操作，依然交给工作线程池去做，对逻辑进行解耦。
@@ -247,7 +458,7 @@ RPC（Remote Procedure Call），即远程过程调用，也就是说两台服�
 考虑一个聊天业务，我们对其进行子模块划分，那么可以大致分为：用户管理、好友管理、群组管理、消息管理、文件管理，其中每一个模块都包含了一个特定的业务。将该服务器部署在一个单机上面，如下图所示：
 
 <div align="center">
-<img src="./screenshot/single-server.png" width="45%" height="45%"/>
+<img src="./screenshot/single-server.png" width="40%" height="40%"/>
 </div>
 
 上图中所示的单机服务器模型存在如下缺点：
@@ -260,7 +471,7 @@ RPC（Remote Procedure Call），即远程过程调用，也就是说两台服�
 为了解决单机服务器所带来的并发量较低的缺陷，我们可以采用集群的方法，增加服务器的数量，同时通过一个负载均衡服务器来分发用户请求即可。常见的硬件负载均衡器有：F5、A10 等，软件层面的负载均衡服务器包括 LVS、Nginx、HAproxy 等。集群服务器模型的结构则如下图所示：
 
 <div align="center">
-<img src="./screenshot/cluster.png" width="65%" height="65%"/>
+<img src="./screenshot/cluster.png" width="60%" height="60%"/>
 </div>
 
 对于集群服务器模型而言，它解决了硬件资源受限所导致的用户并发量问题，此外如果其中一台服务器挂掉，还有另外其它几台服务器可以正常提供服务。但是对于项目编译、部署的问题而言，却并未得到改善，项目要分别在每个机器上进行编译、部署，反而变得更加麻烦了。对于不同模块对于硬件资源的需求也并未得到解决。此外，对于一些并发量较低的模块，可能并不需要做到高并发，也就无需通过负载均衡器将用户请求分发到不同的服务器中，但是对于集群模型而言，每一个模块之间都是均衡的，并未做到模块的特化。
@@ -268,7 +479,7 @@ RPC（Remote Procedure Call），即远程过程调用，也就是说两台服�
 为了改进上述缺点，我们需要将其改进为分布式模型，其结构如下图所示。即将不同的模块部署在不同的服务器上，同时对于并发量较大的模块，我们可以通过集群部署来提升它的并发量，此外对于不同的模块，也可以提供不同的硬件资源，同时修改一个模块的代码也无需再编译整个项目，仅仅编译该模块即可：
 
 <div align="center">
-<img src="./screenshot/distributed.png" width="65%" height="65%"/>
+<img src="./screenshot/distributed.png" width="75%" height="75%"/>
 </div>
 
 总结而言，集群和分布式的区别如下：
@@ -293,5 +504,57 @@ RPC（Remote Procedure Call），即远程过程调用，也就是说两台服�
 - JSON：一种通用和轻量级的数据交换格式，也是以文本的结构进行存储，是一种简单的消息格式。JSON 作为数据包格式传输时具有更高的效率，这是因为 JSON 不像 XML 那样需要有严格的闭合标签，这就让有效数据量与总数据包比有着显著的提升，从而减少同等数据流量的情况下网络的传输压力。
 - Protobuf：是 Google 开发的一种独立和轻量级的数据交换格式，以二进制结构进行存储，用于不同服务之间序列化数据。它是一种轻便高效的结构化数据存储格式，可以用于结构化数据串行化，或者序列化，可用于通讯协议、数据存储等领域的语言无关、平台无关、可扩展的序列化结构数据格式。
 
-而该项目便是使用 Protobuf 来进行消息的序列化和反序列化。
+而该项目便是使用 Protobuf 来进行消息的序列化和反序列化，同时使用其来实现RPC框架，其底层的通信流程如下图所示：
 
+<div align="center">
+<img src="./screenshot/RPC-calling-procedure.png"/>
+</div>
+
+此外，为了解决TCP的粘包问题，我们设计了如下格式的数据头用来传递服务名称、方法名称以及参数大小，通过该数据头部我们可以确定所要读取的数据长度：
+
+```proto
+message RpcHeader {
+  bytes service_name = 1;
+  bytes method_name = 2;
+  uint32 args_size = 3;
+}
+```
+
+同时，为了确定 RpcHeader 的长度，我们使用了固定的 4 个字节来存储消息头的长度。数据打包和解包的流程图如下所示：
+
+<div align="center">
+<img src="./screenshot/package.png"/>
+</div>
+
+**打包流程**：
+
+1. 序列化函数参数得到 argsStr，其长度为 argsSize；
+2. 打包 service_name、method_name 和 argsSize 得到 rpcHeader；
+3. 序列化 rpcHeader 得到 rpcHeaderStr，其长度为 headerSize；
+4. 将 headerSize 存储到数据包的前 4 个字节，后面的依次是 rpcHeaderStr 和 argsStr；
+5. 通过网络发送数据包；
+
+**解包流程**：
+
+1. 通过网络接收数据包；
+2. 首先取出数据包的前 4 个字节，读取出 headerSize 的大小；
+3. 从第 5 个字节开始，读取 headerSize 字节大小的数据，即为 rpcHeaderStr 的内容；
+4. 反序列化 rpcHeaderStr，得到 service_name、method_name 和 argsSize；
+5. 从 4+headerSize 字节开始，读取 argsSize 字节大小的数据，即为 argsStr 的内容；
+6. 反序列化 argsStr 得到函数参数 args；
+
+### 3. ZooKeeper
+
+在分布式应用中，为了能够知道自己所需的服务位于哪台主机上，我们需要一个服务注册与发现中心，这也就是该项目中的ZooKeeper。它是一种分布式协调服务，可以在分布式系统中共享配置，协调锁资源，提供命名服务。
+
+Zookeeper通过树形结构来存储数据，它由一系列被称为**ZNode**的数据节点组成，类似于常见的文件系统。不过和常见的文件系统不同，Zookeeper将数据全量存储在内存中，以此来实现高吞吐，减少访问延迟，其结构如下图所示：
+
+<div align="center">
+<img src="./screenshot/znode-structure.png" width="45%" height="45%"/>
+</div>
+
+在 `ZkClient` 类中，调用 `start()` 方法创建 `zkHandler_` 句柄时，其调用过程如下图所示，由于 zookeeper_init 是异步方法，所以该函数返回后，并不代表句柄创建成功，它会在回调函数线程中调用所传入的回调函数，在该回调函数中我们可以来判断句柄是否创建成功，由于API调用线程阻塞于信号量处，所以在回调函数中如果句柄创建成功，则调用 `sem_post` 方法增加信号量，以通知API调用线程句柄创建成功：
+
+<div align="center">
+<img src="./screenshot/zookeeper_init.png" width="50%" height="50%"/>
+</div>

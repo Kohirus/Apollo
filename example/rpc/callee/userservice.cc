@@ -1,6 +1,5 @@
 #include "../user.pb.h"
 #include "configparser.h"
-#include "rpcapplication.h"
 #include "rpcprovider.h"
 #include <iostream>
 #include <string>

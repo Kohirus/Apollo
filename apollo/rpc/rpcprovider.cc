@@ -3,6 +3,7 @@
 #include "log.h"
 #include "rpcheader.pb.h"
 #include "tcpserver.h"
+#include "zkclient.h"
 #include <google/protobuf/descriptor.h>
 using namespace apollo;
 using namespace google::protobuf;
@@ -50,6 +51,24 @@ void RpcProvider::run() {
         std::placeholders::_3));
 
     server.setThreadNum(rpcNode.threadNum);
+
+    ZkClient zkCli;
+    zkCli.start();
+
+    // 将当前RPC节点上要发布的服务全部注册到zookeeper中 让RpcClient可以在zookeeper上发现服务
+    for (auto& service : serviceMap_) {
+        std::string service_path = "/" + service.first;
+        zkCli.create(service_path, "", 0);
+        for (auto& method : service.second.methodMap) {
+            std::string method_path = service_path + "/" + method.first;
+
+            char method_data[128] = { 0 };
+            sprintf(method_data, "%s:%d", rpcNode.ip.c_str(), rpcNode.port);
+
+            // 创建临时性节点
+            zkCli.create(method_path.c_str(), method_data, ZOO_EPHEMERAL);
+        }
+    }
 
     LOG_FMT_INFO(g_rpclogger, "RpcProvider start service at %s:%d",
         rpcNode.ip.c_str(), rpcNode.port);

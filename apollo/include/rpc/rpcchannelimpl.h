@@ -1,5 +1,5 @@
-#ifndef __APOLLO_RPCCONSUMER_H__
-#define __APOLLO_RPCCONSUMER_H__
+#ifndef __APOLLO_RPCCHANNELIMPL_H__
+#define __APOLLO_RPCCHANNELIMPL_H__
 
 #include "tcpclient.h"
 #include <google/protobuf/service.h>
@@ -12,15 +12,15 @@ class EventLoop;
 class Buffer;
 
 /**
- * @brief RPC消费者
+ * @brief RPC消息通道
  * 
  */
-class RpcConsumer : public google::protobuf::RpcChannel {
+class RpcChannelImpl : public google::protobuf::RpcChannel {
 public:
-    RpcConsumer();
-    RpcConsumer(const RpcConsumer&) = delete;
-    RpcConsumer& operator=(const RpcConsumer&) = delete;
-    ~RpcConsumer();
+    RpcChannelImpl();
+    RpcChannelImpl(const RpcChannelImpl&) = delete;
+    RpcChannelImpl& operator=(const RpcChannelImpl&) = delete;
+    ~RpcChannelImpl();
 
     void CallMethod(const google::protobuf::MethodDescriptor* method,
         google::protobuf::RpcController*                      controller,
@@ -52,4 +52,4 @@ private:
 };
 } // namespace apollo
 
-#endif // !__APOLLO_RPCCONSUMER_H__
+#endif // !__APOLLO_RPCCHANNELIMPL_H__
