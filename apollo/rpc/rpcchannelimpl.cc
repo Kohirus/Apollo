@@ -10,7 +10,7 @@ using namespace apollo;
 using namespace google::protobuf;
 
 RpcChannelImpl::RpcChannelImpl()
-    : loop_(new EventLoop) {
+    : loop_() {
 }
 
 RpcChannelImpl::~RpcChannelImpl() {
@@ -84,82 +84,40 @@ void RpcChannelImpl::CallMethod(
     std::string ip   = hostData.substr(0, idx);
     uint16_t    port = atoi(hostData.substr(idx + 1).c_str());
 
-    struct sockaddr_in server_addr;
-    server_addr.sin_family      = AF_INET;
-    server_addr.sin_port        = htons(port);
-    server_addr.sin_addr.s_addr = inet_addr(ip.c_str());
+    InetAddress serverAddr(port, ip);
 
-    if (-1 == connect(clientfd, (struct sockaddr*)&server_addr, sizeof(server_addr))) {
-        controller->SetFailed("failed to connect, errno: " + std::to_string(errno));
-        ::close(clientfd);
-        return;
+    TcpClient client(&loop_, serverAddr, "RpcChannelImpl");
+    client.setConnectionCallback(std::bind(&RpcChannelImpl::onConnection, this, std::placeholders::_1));
+    client.setMessageCallback(std::bind(&RpcChannelImpl::onMessage, this,
+        std::placeholders::_1, std::placeholders::_2,
+        std::placeholders::_3, &client));
+
+    client.connect();
+    loop_.loop();
+
+    LOG_INFO(g_rpclogger) << "close connection by RpcProvider";
+
+    // 对接收到的RPC应答进行反序列化
+    if (!response->ParseFromString(result_)) {
+        controller->SetFailed("failed to parse response: " + result_);
     }
-
-    // 发送 RPC 请求
-    if (-1 == send(clientfd, package_.c_str(), package_.size(), 0)) {
-        controller->SetFailed("failed to send rpc str, errno: " + std::to_string(errno));
-        ::close(clientfd);
-        return;
-    }
-
-    // 接受 RPC 的响应值
-    char recv_buf[1024] = { 0 };
-    int  recv_size      = 0;
-    if (-1 == (recv_size = recv(clientfd, recv_buf, 1024, 0))) {
-        controller->SetFailed("failed to recv rpc str, errno: " + std::to_string(errno));
-        ::close(clientfd);
-        return;
-    }
-
-    // 反序列化 rpc 调用的响应数据
-    if (!response->ParseFromArray(recv_buf, recv_size)) {
-        controller->SetFailed("failed to parse receive buffer: " + string(recv_buf));
-        ::close(clientfd);
-        return;
-    }
-
-    ::close(clientfd);
-
-    // TODO: 使用muduo客户端
-    // ! muduo客户端存在问题: 无法响应onMessage回调函数
-    // 从配置文件中获取服务器IP地址和端口号
-    // auto        rpcNode = ConfigParser::getInstance()->rpcNodeConfig();
-    // InetAddress serverAddr(rpcNode.port, rpcNode.ip);
-
-    // TcpClient client(loop_.get(), serverAddr, "RpcChannelImpl");
-    // client.setConnectionCallback(std::bind(&RpcChannelImpl::onConnection, this, std::placeholders::_1));
-    // client.setMessageCallback(std::bind(&RpcChannelImpl::onMessage, this,
-    //     std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-
-    // client.connect();
-    // loop_->loop();
-
-    // LOG_INFO(g_rpclogger) << "close connection by RpcProvider";
-
-    // // 对接收到的RPC应答进行反序列化
-    // if (!response->ParseFromString(result_)) {
-    //     LOG_FMT_ERROR(g_rpclogger, "failed to parse response: %s", result_.c_str());
-    //     return;
-    // }
 }
 
 void RpcChannelImpl::onConnection(const TcpConnectionPtr& conn) {
     if (conn->connected()) {
         LOG_INFO(g_rpclogger) << "Connection Up";
-    } else {
-        LOG_INFO(g_rpclogger) << "Connection Down";
-        loop_->quit();
-    }
-}
-
-void RpcChannelImpl::onMessage(const TcpConnectionPtr& conn, Buffer* buffer, Timestamp reveiveTime) {
-    if (buffer->readableBytes() == 0) {
         // 发送RPC请求
         conn->send(package_);
         LOG_INFO(g_rpclogger) << "send package to RpcProvider: " << package_;
     } else {
-        // 接收RPC应答
-        result_ = buffer->retrieveAllAsString();
-        LOG_INFO(g_rpclogger) << "receive response from RpcProvider: " << result_;
+        LOG_INFO(g_rpclogger) << "Connection Down";
+        loop_.quit();
     }
+}
+
+void RpcChannelImpl::onMessage(const TcpConnectionPtr& conn, Buffer* buffer, Timestamp reveiveTime, TcpClient* client) {
+    // 接收RPC应答
+    result_ = buffer->retrieveAllAsString();
+    LOG_INFO(g_rpclogger) << "receive response from RpcProvider: " << result_;
+    client->disconnect();
 }

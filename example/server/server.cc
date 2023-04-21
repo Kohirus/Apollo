@@ -1,5 +1,6 @@
 #include "log.h"
 #include "tcpserver.h"
+#include "qpsmsg.pb.h"
 using namespace apollo;
 
 static std::shared_ptr<apollo::Logger> biz_logger = LOG_NAME("business");
@@ -30,8 +31,9 @@ private:
         if (conn->connected()) {
             LOG_FMT_INFO(biz_logger, "Connection Up: %s",
                 conn->peerAddr().toIpPort().c_str());
-            std::string message = "hello, client";
-            conn->send(message);
+
+            // std::string message = "hello, client";
+            // conn->send(message);
         } else {
             LOG_FMT_INFO(biz_logger, "Connection Down: %s",
                 conn->peerAddr().toIpPort().c_str());
@@ -43,7 +45,19 @@ private:
         Buffer* buffer, Timestamp receiveTime) {
         std::string message = buffer->retrieveAllAsString();
         LOG_FMT_INFO(biz_logger, "reveive message: %s", message.c_str());
-        // conn->send(message);
+        qps_test::EchoMessage request, response;
+
+        // 解包
+        request.ParseFromString(message);
+
+        response.set_id(request.id());
+        response.set_content(request.content());
+
+        // 序列化
+        std::string responseStr;
+        response.SerializeToString(&responseStr);
+
+        conn->send(responseStr);
         // conn->shutdown();
         // LOG_INFO(biz_logger) << "close write";
     }

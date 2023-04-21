@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package qps_test;
+
+message EchoMessage {
+    bytes content = 1; // 消息体
+    uint32 id = 2;  // 消息ID
+};

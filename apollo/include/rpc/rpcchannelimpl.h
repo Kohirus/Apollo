@@ -41,11 +41,12 @@ private:
      * @param conn 连接对象
      * @param buffer 缓冲区
      * @param reveiveTime 消息接收时间
+     * @param client 客户端对象
      */
-    void onMessage(const TcpConnectionPtr& conn, Buffer* buffer, Timestamp reveiveTime);
+    void onMessage(const TcpConnectionPtr& conn, Buffer* buffer, Timestamp reveiveTime, TcpClient* client);
 
 private:
-    std::unique_ptr<EventLoop> loop_;
+    EventLoop loop_;   // 事件循环
 
     std::string package_; // RPC请求体
     std::string result_;  // RPC应答体

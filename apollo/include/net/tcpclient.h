@@ -74,7 +74,7 @@ public:
 
     /**
      * @brief 与服务器断开连接
-     * 
+     * @details 如果连接存在，会继续接收服务端发送来的数据 
      */
     void disconnect();
 
