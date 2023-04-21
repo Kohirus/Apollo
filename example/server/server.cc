@@ -30,6 +30,8 @@ private:
         if (conn->connected()) {
             LOG_FMT_INFO(biz_logger, "Connection Up: %s",
                 conn->peerAddr().toIpPort().c_str());
+            std::string message = "hello, client";
+            conn->send(message);
         } else {
             LOG_FMT_INFO(biz_logger, "Connection Down: %s",
                 conn->peerAddr().toIpPort().c_str());
@@ -41,9 +43,9 @@ private:
         Buffer* buffer, Timestamp receiveTime) {
         std::string message = buffer->retrieveAllAsString();
         LOG_FMT_INFO(biz_logger, "reveive message: %s", message.c_str());
-        conn->send(message);
-        conn->shutdown();
-        LOG_INFO(biz_logger) << "close write";
+        // conn->send(message);
+        // conn->shutdown();
+        // LOG_INFO(biz_logger) << "close write";
     }
 
 private:

@@ -1,16 +1,15 @@
 #ifndef __APOLLO_TCPCLIENT_H__
 #define __APOLLO_TCPCLIENT_H__
 
+#include "connector.h"
+#include "eventloop.h"
+#include "inetaddress.h"
 #include "tcpconnection.h"
 #include <atomic>
 #include <mutex>
 #include <string>
-#include "eventloop.h"
-#include "inetaddress.h"
 
 namespace apollo {
-
-class Connector;
 
 /**
  * @brief TCP客户端
@@ -85,6 +84,25 @@ public:
      */
     void stop();
 
+    /**
+     * @brief 返回TCP连接对象
+     * 
+     * @return TcpConnectionPtr 
+     */
+    TcpConnectionPtr connection();
+
+    /**
+     * @brief 是否尝试重新连接
+     * 
+     */
+    bool retry() const { return retry_; }
+
+    /**
+     * @brief 开启自动重连机制
+     * 
+     */
+    void enableRetry() { retry_ = true; }
+
 private:
     /**
      * @brief 新连接的回调函数
@@ -106,6 +124,7 @@ private:
 
     const std::string name_;    // 客户端名称
     std::atomic_bool  connect_; // 是否开始连接
+    std::atomic_bool  retry_;   // 是否尝试重连
 
     ConnectionCallback    connectionCallback_;    // 连接回调函数
     MessageCallback       messageCallback_;       // 读写消息回调函数

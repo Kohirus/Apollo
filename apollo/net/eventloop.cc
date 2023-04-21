@@ -2,6 +2,7 @@
 #include "channel.h"
 #include "log.h"
 #include "poller.h"
+#include "timerqueue.h"
 #include <sys/eventfd.h>
 #include <unistd.h>
 using namespace apollo;
@@ -27,6 +28,7 @@ EventLoop::EventLoop()
     , callingPendingFunctors_(false)
     , threadId_(ThreadHelper::ThreadId())
     , poller_(Poller::newDefaultPoller(this))
+    , timerQueue_(new TimerQueue(this))
     , wakeupFd_(createEvnetFd())
     , wakeupChannel_(new Channel(this, wakeupFd_)) {
     LOG_FMT_DEBUG(g_logger, "EventLoop %p is created in %d thread", this, threadId_);
@@ -112,6 +114,24 @@ void EventLoop::queueInLoop(Functor cb) {
     if (!isInLoopThread() || callingPendingFunctors_) {
         wakeup(); // 唤醒loop所在线程
     }
+}
+
+TimerId EventLoop::runAt(Timestamp time, TimerCallback cb) {
+    return timerQueue_->addTimer(std::move(cb), time, 0.0);
+}
+
+TimerId EventLoop::runAfter(double delay, TimerCallback cb) {
+    Timestamp time(addTime(Timestamp::now(), delay));
+    return runAt(time, std::move(cb));
+}
+
+TimerId EventLoop::runEvery(double interval, TimerCallback cb) {
+    Timestamp time(addTime(Timestamp::now(), interval));
+    return timerQueue_->addTimer(std::move(cb), time, interval);
+}
+
+void EventLoop::cancel(TimerId timerId) {
+    return timerQueue_->cancel(timerId);
 }
 
 void EventLoop::wakeup() {

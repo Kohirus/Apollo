@@ -13,7 +13,8 @@ class Channel;
 
 /**
  * @brief 客户端连接类
- * 
+ * @details 只负责建立socket连接，不负责创建TcpConnection对象 
+ * 且具有自动重连的功能，重连时间会逐渐延长，直到30秒
  */
 class Connector : public std::enable_shared_from_this<Connector> {
 public:
@@ -36,6 +37,12 @@ public:
      * 
      */
     void start();
+
+    /**
+     * @brief 重新启动连接
+     * 
+     */
+    void restart();
 
     /**
      * @brief 停止连接
@@ -118,6 +125,13 @@ private:
      */
     void handleError();
 
+    /**
+     * @brief 重新尝试连接
+     * 
+     * @param sockfd 
+     */
+    void retry(int sockfd);
+
 private:
     EventLoop*  loop_;       // 事件循环
     InetAddress serverAddr_; // 服务器地址
@@ -128,6 +142,11 @@ private:
     std::unique_ptr<Channel> channel_; // 通道
 
     NewConnectionCallback newConnectionCallback_; // 新连接的回调函数
+
+    int retryDelayMs_; // 重连时间
+
+    static const int kMaxRetryDelayMs;  // 最大重连时间
+    static const int kInitRetryDelayMs; // 初始化重连时间
 };
 } // namespace apollo
 

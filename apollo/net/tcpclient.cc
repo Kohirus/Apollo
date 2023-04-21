@@ -1,5 +1,4 @@
 #include "tcpclient.h"
-#include "connector.h"
 #include "log.h"
 #include <strings.h>
 using namespace apollo;
@@ -20,7 +19,8 @@ TcpClient::TcpClient(EventLoop* loop, const InetAddress& serverAddr,
     : loop_(CheckLoopNotNull(loop))
     , connector_(new Connector(loop, serverAddr))
     , name_(nameArg)
-    , connect_(false)
+    , connect_(true)
+    , retry_(false)
     , connectionCallback_()
     , messageCallback_()
     , nextConnId_(1) {
@@ -75,6 +75,11 @@ void TcpClient::stop() {
     connector_->stop();
 }
 
+apollo::TcpConnectionPtr TcpClient::connection() {
+    std::lock_guard<std::mutex> locker(mtx_);
+    return connection_;
+}
+
 void TcpClient::newConnection(int sockfd) {
     sockaddr_in peeraddr, localaddr;
     socklen_t   addrlen = sizeof(peeraddr);
@@ -119,4 +124,9 @@ void TcpClient::removeConnection(const TcpConnectionPtr& conn) {
     }
 
     loop_->queueInLoop(std::bind(&TcpConnection::connectDestoryed, conn));
+    if (retry_ && connect_) {
+        LOG_FMT_INFO(g_logger, "%s reconnecting to %s", name_.c_str(),
+            connector_->serverAddress().toIpPort().c_str());
+        connector_->restart();
+    }
 }

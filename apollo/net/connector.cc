@@ -7,6 +7,9 @@
 #include <unistd.h>
 using namespace apollo;
 
+const int Connector::kMaxRetryDelayMs  = 30 * 1000;
+const int Connector::kInitRetryDelayMs = 500;
+
 /**
  * @brief 创建一个非阻塞的套接字
  * 
@@ -50,7 +53,8 @@ Connector::Connector(EventLoop* loop, const InetAddress& serverAddr)
     : loop_(loop)
     , serverAddr_(serverAddr)
     , connect_(false)
-    , state_(kDisconnected) {
+    , state_(kDisconnected)
+    , retryDelayMs_(kInitRetryDelayMs) {
     LOG_FMT_DEBUG(g_logger, "Connector ctor at %p", this);
 }
 
@@ -61,6 +65,13 @@ Connector::~Connector() {
 void Connector::start() {
     connect_ = true;
     loop_->runInLoop(std::bind(&Connector::startInLoop, this));
+}
+
+void Connector::restart() {
+    setState(kDisconnected);
+    retryDelayMs_ = kInitRetryDelayMs;
+    connect_      = true;
+    startInLoop();
 }
 
 void Connector::stop() {
@@ -79,14 +90,14 @@ void Connector::startInLoop() {
 void Connector::stopInLoop() {
     if (state_ == kConnecting) {
         setState(kDisconnected);
-        removeAndResetChannel();
+        int sockfd = removeAndResetChannel();
+        retry(sockfd);
     }
 }
 
 void Connector::connect() {
     int sockfd    = createNonblocking();
     int ret       = ::connect(sockfd, (sockaddr*)(serverAddr_.getSockAddr()), sizeof(sockaddr_in));
-    LOG_INFO(g_logger) << "connect result: " << ret;
     int saveErrno = (ret == 0) ? 0 : errno;
     switch (saveErrno) {
     case 0:
@@ -102,6 +113,7 @@ void Connector::connect() {
     case ECONNREFUSED:  // 指定的端口没有服务器监听
     case ENETUNREACH:   // 目标主机不可达
         LOG_INFO(g_logger) << "need try again: " << saveErrno;
+        retry(sockfd);
         break;
     case EACCES:       // 无权限
     case EPERM:        // 操作不被允许
@@ -158,9 +170,11 @@ void Connector::handleWrite() {
 
         if (ret) {
             LOG_FMT_WARN(g_logger, "handle write error: ", ret);
+            retry(sockfd);
         } else if (isSelfConnect(sockfd)) {
             // 自连接
             LOG_WARN(g_logger) << "handle write self connect";
+            retry(sockfd);
         } else {
             setState(kConnected);
             if (connect_) {
@@ -176,6 +190,21 @@ void Connector::handleWrite() {
 void Connector::handleError() {
     LOG_ERROR(g_logger) << "handle error, state: " << state_;
     if (state_ == kConnecting) {
-        removeAndResetChannel();
+        int sockfd = removeAndResetChannel();
+        retry(sockfd);
+    }
+}
+
+void Connector::retry(int sockfd) {
+    ::close(sockfd);
+    setState(kDisconnected);
+    if (connect_) {
+        LOG_FMT_INFO(g_logger, "retry connecting to %s in %s ms",
+            serverAddr_.toIpPort().c_str(), retryDelayMs_);
+        loop_->runAfter(retryDelayMs_ / 1000.0,
+            std::bind(&Connector::startInLoop, shared_from_this()));
+        retryDelayMs_ = std::min(retryDelayMs_ * 2, kMaxRetryDelayMs);
+    } else {
+        LOG_DEBUG(g_logger) << "don't connect";
     }
 }

@@ -27,6 +27,7 @@ private:
             LOG_INFO(biz_logger) << "connection up";
         } else {
             LOG_INFO(biz_logger) << "connection down";
+            loop_->quit();
         }
     }
 
@@ -35,7 +36,6 @@ private:
         LOG_FMT_INFO(biz_logger, "reve message: %s", message.c_str());
         conn->send(message);
         client_.disconnect();
-        loop_->quit();
     }
 
 private:
