@@ -34,6 +34,12 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 # 设置项目库文件的输出路径
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
+# 搜索依赖项 - protobuf
+find_package(Protobuf REQUIRED)
+
+# 搜索依赖项 - zookeeper
+find_library(ZK_LIBRARY NAMES zookeeper_mt REQUIRED)
+
 # 设置头文件的搜索路径
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty)
 include_directories(${PROJECT_SOURCE_DIR}/memorypool/include)
@@ -41,6 +47,7 @@ include_directories(${PROJECT_SOURCE_DIR}/apollo/include)
 include_directories(${PROJECT_SOURCE_DIR}/apollo/include/logger)
 include_directories(${PROJECT_SOURCE_DIR}/apollo/include/net)
 include_directories(${PROJECT_SOURCE_DIR}/apollo/include/rpc)
+include_directories(${Protobuf_INCLUDE_DIRS})
 # 设置库文件的搜索路径
 link_directories(${PROJECT_SOURCE_DIR}/lib)
 

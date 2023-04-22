@@ -20,41 +20,38 @@
     - protobuf：3.17.0
     - ZooKeeper：3.4.10
 
-### 2. 部署方法
+### 2. 如何编译
 
-可以运行 `autobuild.sh` 直接进行编译。或者创建 `build` 目录并进入，然后输入如下命令进行编译：
-
-```sh
-cmake ..
-make
-```
-
-如果不需要采用 tcmallloc 内存池模块，而是采用系统原生的 malloc/free，那么更改项目根路径下的 CMakeLists.txt 文件中的如下内容即可：
-
-```cmake
-# option(TCMALLOC "use tcmalloc" ON) 
-option(TCMALLOC "use tcmalloc" OFF)
-```
-
-或者进入 build 目录使用如下命令：
+首先安装相应的 protobuf 库和 zookeeper 库，然后打开 autobuild.sh 文件，将如下内容更改为自己所配置的 protobuf 路径：
 
 ```sh
-cmake .. -DTCMALLOC=ON
-make
+cd $BUILD_DIR &&
+  cmake -DCMAKE_PREFIX_PATH=your_path -DCMAKE_INSTALL_PREFIX=/usr/local/apollo .. &&
+  make install
 ```
 
-如果需要采用 poll 而非 epoll 来作为 I/O 复用模型，那么修改根路径下的 CMakeLists.txt 文件中的如下内容即可：
-
-```cmake
-# option(APLUSEPOLL "use poll" OFF)
-option(APLUSEPOLL "use poll" ON)
-```
-
-或者进入 build 目录使用如下命令：
+运行 `autobuild.sh` 直接进行编译、安装即可，默认情况下安装在 `usr/local/apoll` 路径下，如果需要更改安装路径，那么更改 autobuild.sh 的如下内容即可：
 
 ```sh
-cmake .. -DAPLUSEPOLL=ON
-make
+cd $BUILD_DIR &&
+  cmake -DCMAKE_PREFIX_PATH=/usr/local/protobuf -DCMAKE_INSTALL_PREFIX=obj_path .. &&
+  make install
+```
+
+如果不需要采用 tcmallloc 内存池模块，而是采用系统原生的 malloc/free，那么更改 autobuild.sh 的如下内容即可：
+
+```sh
+cd $BUILD_DIR &&
+  cmake -DCMAKE_PREFIX_PATH=/usr/local/protobuf -DCMAKE_INSTALL_PREFIX=/usr/local/apollo -DTCMALLOC=OFF .. &&
+  make install
+```
+
+如果需要采用 poll 而非 epoll 来作为 I/O 复用模型，那么修改 autobuild.sh 的如下内容即可：
+
+```sh
+cd $BUILD_DIR &&
+  cmake -DCMAKE_PREFIX_PATH=/usr/local/protobuf -DCMAKE_INSTALL_PREFIX=/usr/local/apollo -DAPLUSEPOLL=ON .. &&
+  make install
 ```
 
 > 默认情况下，运行 autobuild.sh 文件时会启用 tcmalloc 内存池，同时使用 epoll 来作为 I/O 复用模型。
