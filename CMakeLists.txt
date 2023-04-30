@@ -4,6 +4,9 @@ project(apollo CXX)
 # 生成compile_commadns.json文件
 set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 
+# 构建应用示例
+option(APOLLO_BUILD_EXAMPLE "Build apollo examples" ON)
+
 option(TCMALLOC "use tcmalloc" ON)
 option(APLUSEPOLL "use poll" OFF)
 if(TCMALLOC)
@@ -42,15 +45,17 @@ find_library(ZK_LIBRARY NAMES zookeeper_mt REQUIRED)
 
 # 设置头文件的搜索路径
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty)
-include_directories(${PROJECT_SOURCE_DIR}/memorypool/include)
 include_directories(${PROJECT_SOURCE_DIR}/apollo/include)
 include_directories(${PROJECT_SOURCE_DIR}/apollo/include/logger)
+include_directories(${PROJECT_SOURCE_DIR}/apollo/include/mempool)
 include_directories(${PROJECT_SOURCE_DIR}/apollo/include/net)
 include_directories(${PROJECT_SOURCE_DIR}/apollo/include/rpc)
 include_directories(${Protobuf_INCLUDE_DIRS})
 # 设置库文件的搜索路径
 link_directories(${PROJECT_SOURCE_DIR}/lib)
 
-add_subdirectory(memorypool)
 add_subdirectory(apollo)
-add_subdirectory(example)
+
+if(APOLLO_BUILD_EXAMPLE)
+    add_subdirectory(example)
+endif()

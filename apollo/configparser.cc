@@ -66,5 +66,44 @@ bool ConfigParser::parse(const std::string& path) {
         return false;
     }
 
+    // 解析数据库配置
+    if (js.find("database") != js.end()) {
+        cnt = js["database"].size();
+        for (int i = 0; i < cnt; i++) {
+            DatabaseConfig config;
+            std::string    type = js["database"][i]["type"];
+            config.type         = toTypeEnumeration(type);
+            js["database"][i].at("ip").get_to(config.ip);
+            js["database"][i].at("port").get_to(config.port);
+            js["database"][i].at("username").get_to(config.username);
+            js["database"][i].at("password").get_to(config.password);
+            js["database"][i].at("dbname").get_to(config.dbname);
+            js["database"][i].at("initsize").get_to(config.initsize);
+            js["database"][i].at("maxsize").get_to(config.maxsize);
+            js["database"][i].at("timeout").get_to(config.timeout);
+            dbConfig_.emplace_back(config);
+        }
+    }
+
     return true;
+}
+
+ConfigParser::DBType ConfigParser::toTypeEnumeration(const std::string& str) {
+    if (str == "mysql") {
+        return DBType::MYSQL;
+    } else if (str == "oracle") {
+        return DBType::ORACLE;
+    } else if (str == "access") {
+        return DBType::ACCESS;
+    } else if (str == "sqlserver") {
+        return DBType::SQLSERVER;
+    } else if (str == "sqlite") {
+        return DBType::SQLITE;
+    } else if (str == "redis") {
+        return DBType::REDIS;
+    } else if (str == "mongodb") {
+        return DBType::MONGODB;
+    } else {
+        return DBType::UNKNOWN;
+    }
 }

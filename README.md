@@ -4,8 +4,9 @@
 
 - 使用 C++11 重写并简化 [muduo](https://github.com/chenshuo/muduo) 网络库；
 - 仿写了 [tcmalloc](https://github.com/google/tcmalloc) 的高并发内存池；
-- 加入了 [sylar](https://github.com/sylar-yin/sylar) 的日志模块并将其改进为异步日志；
-- 使用到了 [protobuf](https://github.com/protocolbuffers/protobuf) 和 [Zookeeper](https://zookeeper.apache.org/) 来作为分布式协调服务；
+- 加入了 [sylar](https://github.com/sylar-yin/sylar) 的日志模块并将其改进为异步日志(异步日志未实现)；
+- 使用 [protobuf](https://github.com/protocolbuffers/protobuf) 来进行 RPC 序列化/反序列化；
+- 使用 [Zookeeper](https://zookeeper.apache.org/) 来作为分布式的注册和发现服务；
 
 ## 项目部署
 
