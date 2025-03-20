@@ -1,5 +1,7 @@
 # Apollo
 
+> 新项目地址：[Talko](https://github.com/Kohirus/Talko)，添加了日志库、配置文件解析、线程池、连接池等功能
+
 使用 C/C++ 开发的一款高性能的后端分布式服务器网络框架。该项目具有如下要点：
 
 - 使用 C++11 重写并简化 [muduo](https://github.com/chenshuo/muduo) 网络库；
